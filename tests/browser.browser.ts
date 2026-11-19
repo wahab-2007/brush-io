@@ -50,7 +50,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await page.locator('.script-actions').getByLabel('Site theme').count(), 1)
   assert.equal(await page.getByRole('link', { name: 'Made by @wahab-2007' }).getAttribute('href'), 'https://github.com/wahab-2007')
   assert.equal(await page.getByRole('button', { name: 'Clear canvas' }).isDisabled(), true)
-  const countSquares = () => page.locator('.cell, .palette-preview span, .legend-cell').evaluateAll((elements) =>
+  const countSquares = () => page.locator('.cell, .palette-preview .palette-cubes span, .legend-cell').evaluateAll((elements) =>
     elements.every((element) => {
       const { width, height } = element.getBoundingClientRect()
       return width > 0 && width === height
@@ -75,7 +75,11 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
 
   assert.equal(await countSquares(), true)
   const green = await selected.evaluate((node) => getComputedStyle(node).backgroundColor)
-  await page.getByLabel('Palette').selectOption('halloween')
+  async function choosePalette(label: string, name: string) {
+    await page.getByRole('button', { name: label, exact: true }).click()
+    await page.getByRole('dialog', { name: label + ' choices' }).getByRole('button', { name, exact: true }).click()
+  }
+  await choosePalette('Palette', 'Halloween')
   assert.notEqual(await selected.evaluate((node) => getComputedStyle(node).backgroundColor), green)
   await page.getByLabel('Site theme').selectOption('dark')
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
@@ -132,7 +136,13 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByRole('button', { name: '61 planned commits on November 19, 2026' }).click()
   await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).waitFor()
   await page.waitForFunction(() => Number(document.documentElement.dataset.clickSounds) > 0)
+  const hoverCount = () => page.locator('html').getAttribute('data-hover-sounds')
+  const beforeControlHover = await hoverCount()
   await page.getByRole('button', { name: 'Full green' }).hover()
+  assert.equal(await hoverCount(), beforeControlHover)
+  await page.waitForTimeout(55)
+  await page.locator('button.cell').first().hover()
+  assert.notEqual(await hoverCount(), beforeControlHover)
   await page.waitForFunction(() => Number(document.documentElement.dataset.hoverSounds) > 0)
   await page.getByRole('slider', { name: 'Random fill density' }).press('ArrowRight')
   await page.waitForFunction(() => Number(document.documentElement.dataset.sliderSounds) > 0)
@@ -168,20 +178,19 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
-  await page.getByLabel('Palette').selectOption('winter')
+  await choosePalette('Palette', 'Winter')
   await page.getByRole('button', { name: 'Full green' }).click()
   assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
-  assert.equal(await page.getByLabel('Palette').inputValue(), 'green')
+  assert.equal(await page.getByRole('button', { name: 'Palette', exact: true }).getAttribute('data-palette'), 'green')
   const january = page.getByRole('button', { name: '1 planned commit on January 15, 2026', exact: true })
   const february = page.getByRole('button', { name: '1 planned commit on February 15, 2026', exact: true })
   const januaryBefore = await january.evaluate((element) => getComputedStyle(element).backgroundColor)
   const februaryBefore = await february.evaluate((element) => getComputedStyle(element).backgroundColor)
-  const oddMonths = page.getByLabel('Odd months', { exact: true })
-  await oddMonths.selectOption('winter')
+  await choosePalette('Odd months', 'Winter')
   assert.notEqual(await january.evaluate((element) => getComputedStyle(element).backgroundColor), januaryBefore)
   assert.equal(await february.evaluate((element) => getComputedStyle(element).backgroundColor), februaryBefore)
   assert.deepEqual(await page.locator('.legend-months').allTextContents(), ['Even months', 'Odd months'])
-  await oddMonths.selectOption('same')
+  await choosePalette('Odd months', 'Same palette')
   assert.equal(await january.evaluate((element) => getComputedStyle(element).backgroundColor), januaryBefore)
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
@@ -200,17 +209,23 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
     assert.equal(await page.locator('body').evaluate((body) => getComputedStyle(body).backgroundColor), color)
   }
 
-  const palette = page.getByLabel('Palette', { exact: true })
-  assert.equal(await palette.locator('option').count(), 17)
-  await palette.selectOption('mono')
-  const mono = await page.locator('.palette-preview').innerHTML()
-  await palette.selectOption('blackWhite')
-  assert.notEqual(await page.locator('.palette-preview').innerHTML(), mono)
+  const palette = page.getByRole('button', { name: 'Palette', exact: true })
+  await palette.click()
+  const picker = page.getByRole('dialog', { name: 'Palette choices' })
+  await picker.waitFor()
+  assert.equal(await picker.getByRole('button').count(), 17)
+  assert.equal(await picker.innerText(), '')
+  await page.keyboard.press('Escape')
+  await picker.waitFor({ state: 'hidden' })
+  await choosePalette('Palette', 'Mono')
+  const mono = await palette.innerHTML()
+  await choosePalette('Palette', 'Black & White')
+  assert.notEqual(await palette.innerHTML(), mono)
   await appearance.selectOption('paper')
   assert.equal(await page.locator('html').getAttribute('data-site-theme'), 'paper')
   await appearance.selectOption('lagoon')
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
-  assert.equal(await palette.inputValue(), 'blackWhite')
+  assert.equal(await palette.getAttribute('data-palette'), 'blackWhite')
 
   await appearance.selectOption('disco')
   const music = page.getByRole('button', { name: 'Disco music' })
@@ -229,7 +244,15 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
     const player = document.querySelector('audio')
     return player?.paused && player.currentTime === 0
   }), true)
-  assert.equal(await palette.inputValue(), 'blackWhite')
+  assert.equal(await palette.getAttribute('data-palette'), 'blackWhite')
+
+  const size = (selector: string) => page.locator(selector).evaluate((node) => node.getBoundingClientRect().width)
+  const tileWidth = await size('button.cell:first-of-type')
+  await page.setViewportSize({ width: 1500, height: 800 })
+  assert.equal(await size('.app'), 1320)
+  assert.equal(await size('.graph-board'), 1118)
+  assert.equal(await size('button.cell:first-of-type'), tileWidth)
+  assert.ok(await palette.locator('.palette-cubes span').first().evaluate((cube) => cube.getBoundingClientRect().width > 12))
 
   await page.setViewportSize({ width: 375, height: 750 })
   assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
