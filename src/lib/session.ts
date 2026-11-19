@@ -20,7 +20,7 @@ export function setChanges(history: History, current: Changes, stroke?: symbol):
   if (keys.length === Object.keys(history.current).length &&
       keys.every((date) => current[date] === history.current[date])) return history
   const past = stroke && stroke === history.stroke ? history.past : [...history.past, history.current]
-  return { past, current, future: [], stroke }
+  return { past, current, future: [], ...(stroke ? { stroke } : {}) }
 }
 
 export function setCount(history: History, date: string, count: number, stroke?: symbol): History {

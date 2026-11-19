@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { colorsFor, paletteGroups, schemeFor } from '../src/lib/themes.ts'
 import type { Theme } from '../src/lib/themes.ts'
-import { fillAll, randomFill } from '../src/lib/brushFill.ts'
 import { layout, yearDates } from '../src/lib/calendar.ts'
 import { summarize } from '../src/lib/intensity.ts'
 import { createPlan, generatePython } from '../src/lib/pythonGenerator.ts'
@@ -58,23 +57,17 @@ test('script plans preserve exact positive counts and exclude future dates', () 
   assert.match(generatePython(additions), /PLAN = \[\["2026-11-19",98\]\]/)
 })
 
-test('random and full fills preserve the baseline and can be undone as a single edit', () => {
-  const days = [
-    { date: '2025-01-01', originalCount: 0 },
-    { date: '2025-01-02', originalCount: 10 },
-    { date: '2025-01-03', originalCount: Number.MAX_SAFE_INTEGER },
-  ]
-  assert.deepEqual(randomFill(days, 0, () => 0), {})
-  assert.deepEqual(randomFill(days, 100, () => 0.5), { '2025-01-01': 5, '2025-01-02': 15 })
-  let index = 0
-  const samples = [0.1, 0.8, 0.6]
-  assert.deepEqual(randomFill(days, 50, () => samples[index++]), { '2025-01-01': 7 })
-  const before = { '2025-01-02': 0 }
-  const filled = fillAll(days, before)
-  assert.deepEqual(filled, { '2025-01-01': 1, '2025-01-02': 1 })
-  assert.deepEqual(fillAll(days, { '2025-01-01': 7 }), { '2025-01-01': 8, '2025-01-02': 11 })
-  assert.deepEqual(fillAll(days, { '2025-01-02': 9 }), { '2025-01-01': 1 })
-  assert.deepEqual(undo(setChanges(newHistory(before), filled)).current, before)
+test('a paint stroke across days undoes as one edit', () => {
+  const stroke = Symbol()
+  const before = newHistory()
+  const first = setCount(before, today, 1, stroke)
+  const repeated = setCount(first, today, 2, stroke)
+  const dragged = setCount(repeated, '2026-11-18', 1, stroke)
+  assert.equal(dragged.past.length, 1)
+  assert.deepEqual(undo(dragged).current, before.current)
+  assert.deepEqual(redo(undo(dragged)).current, dragged.current)
+  const next = setCount(dragged, today, 1, Symbol())
+  assert.deepEqual(undo(next).current, dragged.current)
 })
 
 test('chart palettes stay distinct under independent site themes', () => {
