@@ -8,12 +8,13 @@ export const siteThemes = {
   orchid: 'Orchid',
   lagoon: 'Lagoon',
   ink: 'Ink',
+  disco: 'Disco',
 } as const
 export type SiteTheme = keyof typeof siteThemes
 
 export function schemeFor(theme: SiteTheme, systemDark: boolean): Scheme {
   if (theme === 'system') return systemDark ? 'dark' : 'light'
-  return theme === 'dark' || theme === 'lagoon' || theme === 'ink' ? 'dark' : 'light'
+  return theme === 'dark' || theme === 'lagoon' || theme === 'ink' || theme === 'disco' ? 'dark' : 'light'
 }
 
 const classic = {

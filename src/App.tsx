@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Appearance } from './components/Appearance.tsx'
 import { DayEditor } from './components/DayEditor.tsx'
 import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
@@ -9,7 +10,7 @@ import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
 import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
-import { colorsFor, paletteGroups, schemeFor, siteThemes } from './lib/themes.ts'
+import { colorsFor, paletteGroups, schemeFor } from './lib/themes.ts'
 import type { SiteTheme, Theme } from './lib/themes.ts'
 
 type Brush = 'manual' | '1' | '5' | '10' | 'custom'
@@ -161,11 +162,7 @@ export default function App() {
     <main className="app">
       <header className="masthead">
         <div className="wordmark"><span className="brand-icon"><Icon name="calendar"/></span>Brush IO</div>
-        <label className="appearance"><span>Site theme</span>
-          <select aria-label="Appearance" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            {Object.entries(siteThemes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-          </select>
-        </label>
+        <Appearance theme={mode} onChange={setMode}/>
       </header>
 
       <section className="workspace" aria-labelledby="calendar-heading">
