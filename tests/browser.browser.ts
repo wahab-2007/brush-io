@@ -7,7 +7,7 @@ import type { AddressInfo } from 'node:net'
 import { test } from 'node:test'
 import { chromium } from 'playwright-core'
 
-test('the static Pages build edits, saves, copies, and downloads a blank canvas', { timeout: 45_000 }, async (t) => {
+test('the static Pages build edits, saves, and downloads a blank canvas', { timeout: 45_000 }, async (t) => {
   const server = createServer(async (req, res) => {
     const file = req.url?.slice('/brush-io/'.length) || 'index.html'
     if (req.url?.startsWith('/brush-io/') &&
@@ -30,7 +30,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   const executablePath = process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)
   const browser = await chromium.launch({ executablePath })
   t.after(() => browser.close())
-  const page = await browser.newPage({ permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1200, height: 800 } })
+  const page = await browser.newPage({ viewport: { width: 1200, height: 800 } })
   const failed: string[] = []
   const requests: string[] = []
   page.on('pageerror', (error) => failed.push(error.message))
@@ -47,17 +47,21 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   const lastDay = 'November 19'
   const initial = 0
   await cell(firstDay).waitFor()
-  for (const label of ['Tools', 'Presets']) {
+  assert.equal(await page.locator('.graph-board').getByLabel('Year', { exact: true }).count(), 1)
+  assert.equal(await page.locator('.palette-preview').count(), 1)
+  const tile = await cell(firstDay).boundingBox()
+  assert.equal(tile?.width, 18)
+  assert.equal(tile?.height, 18)
+  for (const label of ['Tools', 'Presets', 'Normal', 'Expanded', 'Odd months', 'Copy Python', 'Import canvas', 'Export canvas']) {
     assert.equal(await page.getByRole('button', { name: label, exact: true }).count(), 0)
   }
-  for (const label of ['Palette', 'Odd months']) {
-    assert.equal(await page.getByText(label, { exact: true }).count(), 0)
-    assert.equal(await page.getByRole('button', { name: label, exact: true }).count(), 1)
-  }
+  assert.equal(await page.getByText('Palette', { exact: true }).count(), 0)
 
   await page.evaluate(() => {
     const create = AudioContext.prototype.createOscillator
     AudioContext.prototype.createOscillator = function (this: AudioContext) {
+      const data = document.documentElement.dataset
+      data.audioCues = String(Number(data.audioCues ?? 0) + 1)
       const oscillator = create.call(this)
       const record = oscillator.frequency.setValueAtTime.bind(oscillator.frequency)
       oscillator.frequency.setValueAtTime = (value, time) => {
@@ -76,6 +80,12 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await cell(lastDay).click({ button: 'right' })
   assert.equal(await count(lastDay), initial)
   await page.waitForFunction(() => document.documentElement.dataset.addCues && document.documentElement.dataset.removeCues)
+
+  const audioCount = await page.locator('html').getAttribute('data-audio-cues')
+  await cell(firstDay).hover()
+  await cell(lastDay).hover()
+  await page.waitForTimeout(70)
+  assert.equal(await page.locator('html').getAttribute('data-audio-cues'), audioCount)
 
   const days = [firstDay, 'January 5', 'January 6']
   async function drag(button: 'left' | 'right') {
@@ -120,7 +130,6 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
     await page.getByRole('dialog', { name: label + ' choices' }).getByRole('button', { name, exact: true }).click()
   }
   await choosePalette('Palette', 'Plum')
-  await choosePalette('Odd months', 'Winter')
   const appearance = page.getByLabel('Site theme', { exact: true })
   await appearance.selectOption('true-dark')
   await page.reload()
@@ -129,10 +138,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await appearance.inputValue(), 'true-dark')
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
   assert.equal(await page.getByRole('button', { name: 'Palette', exact: true }).getAttribute('data-palette'), 'plum')
-  assert.equal(await page.getByRole('button', { name: 'Odd months', exact: true }).getAttribute('data-palette'), 'winter')
 
-  await page.getByRole('button', { name: 'Expanded', exact: true }).click()
-  assert.equal(await cell(lastDay).textContent(), String(initial + 1))
   await cell(lastDay).hover()
   const readout = page.locator('.cell-readout')
   assert.match(await readout.innerText(), /November 19, 2026/)
@@ -140,11 +146,27 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await readout.locator('.readout-number').evaluate((element) => getComputedStyle(element).color), cellColor)
   const [script] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Download Python' }).click(),
+    page.getByRole('button', { name: 'Script', exact: true }).click(),
   ])
   assert.equal(script.suggestedFilename(), 'github_contributions.py')
   const python = await readFile(await script.path(), 'utf8')
   assert.match(python, /PLAN = \[\["2026-11-19",1\]\]/)
+
+  assert.equal(await page.locator('.notice:visible').count(), 0)
+
+  const clear = page.getByRole('button', { name: 'Clear canvas', exact: true })
+  assert.equal(await clear.textContent(), '')
+  assert.equal(await clear.evaluate((button) => {
+    const { width, height } = button.getBoundingClientRect()
+    return width === height && getComputedStyle(button).borderRadius === '50%'
+  }), true)
+  await clear.click()
+  assert.equal(await page.locator('button.cell').evaluateAll((cells) => cells.every((cell) =>
+    cell.getAttribute('aria-label')?.startsWith('0 '))), true)
+  assert.equal(await page.locator('.notice:visible').count(), 0)
+  assert.equal(await page.getByRole('button', { name: 'Script', exact: true }).isDisabled(), true)
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  assert.equal(await count(lastDay), initial + 1)
 
   await appearance.selectOption('disco')
   await page.getByRole('button', { name: 'Disco music' }).waitFor()
@@ -154,9 +176,6 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.setViewportSize({ width: 375, height: 750 })
   assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
-  await page.getByRole('button', { name: 'Copy Python' }).click()
-  await page.getByText('Copied the Python script for 1 commit.').waitFor()
-  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), python)
   assert.ok(requests.every((url) => url.startsWith(origin) || url.startsWith('blob:')))
   assert.deepEqual(failed, [])
 })
