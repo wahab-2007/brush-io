@@ -39,15 +39,42 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await page.clock.setFixedTime(new Date('2026-11-19T18:00:00Z'))
   const origin = 'http://127.0.0.1:' + port + '/brush-io/'
   await page.goto(origin)
-  const cell = (date: string) => page.getByRole('button', {
-    name: new RegExp(' on ' + date + ', 2026$'),
+  const cell = (date: string, year = 2026) => page.getByRole('button', {
+    name: new RegExp(' on ' + date + ', ' + year + '$'),
   })
-  const count = async (date: string) => Number((await cell(date).getAttribute('aria-label'))?.split(' ')[0].replaceAll(',', ''))
+  const count = async (date: string, year = 2026) => Number((await cell(date, year).getAttribute('aria-label'))?.split(' ')[0].replaceAll(',', ''))
   const firstDay = 'January 4'
   const lastDay = 'November 19'
   const initial = 0
   await cell(firstDay).waitFor()
-  assert.equal(await page.locator('.graph-board').getByLabel('Year', { exact: true }).count(), 1)
+  const viewport = page.getByRole('region', { name: 'Calendar years', exact: true })
+  const yearRow = (year: number) => viewport.getByRole('region', { name: year + ' calendar', exact: true })
+  const toolbar = page.getByRole('group', { name: 'Calendar toolbar' })
+  assert.equal(await page.getByLabel('Year', { exact: true }).count(), 0)
+  assert.deepEqual(await toolbar.locator(':scope > button, :scope > .theme-controls select').evaluateAll((controls) =>
+    controls.map((control) => control.getAttribute('aria-label') ?? control.textContent?.trim())),
+  ['Undo', 'Redo', 'Clear canvas', 'Palette', 'Download Script', 'Help', 'Site theme'])
+  assert.equal(await toolbar.evaluate((element) => {
+    const { x, width } = element.getBoundingClientRect()
+    return Math.abs(x + width / 2 - innerWidth / 2) < 2
+  }), true)
+  assert.equal(await toolbar.getByLabel('Site theme').evaluate((element) => element.getBoundingClientRect().width), 104)
+  assert.equal(await page.getByText('Less', { exact: true }).count(), 0)
+  assert.equal(await page.getByText('More', { exact: true }).count(), 0)
+  await cell(firstDay, 2025).waitFor()
+  assert.equal(await viewport.evaluate((element) => {
+    const bounds = element.getBoundingClientRect()
+    return [...element.querySelectorAll('section')].slice(0, 2).every((row) => {
+      const panel = row.getBoundingClientRect()
+      return panel.top >= bounds.top && panel.bottom <= bounds.bottom
+    })
+  }), true)
+  await toolbar.getByRole('button', { name: 'Help', exact: true }).click()
+  const help = page.getByRole('dialog', { name: 'Calendar help', exact: true })
+  await help.getByText(/Scroll inside the calendar/).waitFor()
+  assert.match(await help.getByRole('link', { name: 'Read the tutorial' }).getAttribute('href') ?? '', /#tutorial$/)
+  await page.keyboard.press('Escape')
+  await help.waitFor({ state: 'hidden' })
   assert.equal(await page.locator('.palette-preview').count(), 1)
   const tile = await cell(firstDay).boundingBox()
   assert.equal(tile?.width, 18)
@@ -95,12 +122,12 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
     await page.mouse.up({ button })
   }
   await drag('left')
-  assert.deepEqual(await Promise.all(days.map(count)), [1, 1, 1])
+  assert.deepEqual(await Promise.all(days.map((day) => count(day))), [1, 1, 1])
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
-  assert.deepEqual(await Promise.all(days.map(count)), [0, 0, 0])
+  assert.deepEqual(await Promise.all(days.map((day) => count(day))), [0, 0, 0])
   await page.getByRole('button', { name: 'Redo', exact: true }).click()
   await drag('right')
-  assert.deepEqual(await Promise.all(days.map(count)), [0, 0, 0])
+  assert.deepEqual(await Promise.all(days.map((day) => count(day))), [0, 0, 0])
 
   await cell(firstDay).hover()
   await page.mouse.down()
@@ -140,13 +167,13 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   assert.equal(await page.getByRole('button', { name: 'Palette', exact: true }).getAttribute('data-palette'), 'plum')
 
   await cell(lastDay).hover()
-  const readout = page.locator('.cell-readout')
+  const readout = yearRow(2026).locator('.cell-readout')
   assert.match(await readout.innerText(), /November 19, 2026/)
   const cellColor = await cell(lastDay).evaluate((element) => getComputedStyle(element).backgroundColor)
   assert.equal(await readout.locator('.readout-number').evaluate((element) => getComputedStyle(element).color), cellColor)
   const [script] = await Promise.all([
     page.waitForEvent('download'),
-    page.getByRole('button', { name: 'Script', exact: true }).click(),
+    page.getByRole('button', { name: 'Download Script', exact: true }).click(),
   ])
   assert.equal(script.suggestedFilename(), 'github_contributions.py')
   const python = await readFile(await script.path(), 'utf8')
@@ -161,12 +188,29 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
     return width === height && getComputedStyle(button).borderRadius === '50%'
   }), true)
   await clear.click()
-  assert.equal(await page.locator('button.cell').evaluateAll((cells) => cells.every((cell) =>
+  assert.equal(await yearRow(2026).locator('button.cell').evaluateAll((cells) => cells.every((cell) =>
     cell.getAttribute('aria-label')?.startsWith('0 '))), true)
   assert.equal(await page.locator('.notice:visible').count(), 0)
-  assert.equal(await page.getByRole('button', { name: 'Script', exact: true }).isDisabled(), true)
+  assert.equal(await page.getByRole('button', { name: 'Download Script', exact: true }).isDisabled(), true)
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   assert.equal(await count(lastDay), initial + 1)
+
+  await viewport.evaluate((element) => {
+    element.scrollTop = element.firstElementChild!.getBoundingClientRect().height
+  })
+  const previousYear = yearRow(2025).getByRole('button', { name: '2025', exact: true })
+  await page.locator('.year-marker[aria-pressed="true"]').filter({ hasText: '2025' }).waitFor()
+  assert.equal(await previousYear.getAttribute('aria-pressed'), 'true')
+  await cell(firstDay, 2025).click()
+  assert.equal(await count(firstDay, 2025), 1)
+  assert.equal(await count(lastDay, 2026), initial + 1)
+  const [previousScript] = await Promise.all([
+    page.waitForEvent('download'),
+    toolbar.getByRole('button', { name: 'Download Script', exact: true }).click(),
+  ])
+  assert.match(await readFile(await previousScript.path(), 'utf8'), /PLAN = \[\["2025-01-04",1\]\]/)
+  await viewport.evaluate((element) => { element.scrollTop = 0 })
+  await page.locator('.year-marker[aria-pressed="true"]').filter({ hasText: '2026' }).waitFor()
 
   await appearance.selectOption('disco')
   await page.getByRole('button', { name: 'Disco music' }).waitFor()
@@ -174,7 +218,7 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await appearance.selectOption('true-dark')
   assert.equal(await page.locator('audio').evaluate((audio) => (audio as HTMLAudioElement).paused), true)
   await page.setViewportSize({ width: 375, height: 750 })
-  assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
+  assert.equal(await yearRow(2026).locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
   assert.ok(requests.every((url) => url.startsWith(origin) || url.startsWith('blob:')))
   assert.deepEqual(failed, [])
