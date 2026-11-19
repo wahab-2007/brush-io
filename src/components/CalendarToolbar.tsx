@@ -29,9 +29,11 @@ export function CalendarToolbar(props: CalendarToolbarProps) {
       {props.palette}
       <button className="primary" disabled={!props.canDownload} title={'Download script for ' + props.year}
         onClick={props.onDownload}><Icon name="code"/>Download Script</button>
-      <button type="button" className="history-button help-button" aria-label="Help" aria-haspopup="dialog"
-        popoverTarget={helpId}>?</button>
-      {props.appearance}
+      <div className="toolbar-appearance">
+        <button type="button" className="history-button help-button" aria-label="Help" aria-haspopup="dialog"
+          popoverTarget={helpId}>?</button>
+        {props.appearance}
+      </div>
 
       <div id={helpId} className="calendar-help" popover="auto" role="dialog" aria-label="Calendar help">
         <h2>Using the calendar</h2>

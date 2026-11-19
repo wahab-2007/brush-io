@@ -349,6 +349,7 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 }
 .calendar-toolbar button, .calendar-toolbar select { border-radius: 10px; transition: background-color .15s, border-color .15s; }
 .calendar-toolbar button.history-button { border-radius: 50%; }
+.toolbar-appearance { display: flex; align-items: center; gap: 8px; max-width: 100%; }
 .help-button { font-size: 16px; }
 button.history-button[data-action="undo"] { --action-color: #75243b; --action-hover: #8e2f49; }
 button.history-button[data-action="redo"] { --action-color: #195cc0; --action-hover: #216bd6; }
