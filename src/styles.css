@@ -197,7 +197,8 @@ h1 { margin: 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.055em; line
 .year-control { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .year-control select { color: var(--text); }
 .graph-section { padding: 18px 28px 18px; }
-.view-bar, .action-bar, .file-actions, .script-actions, .history-actions, .palette-control { display: flex; align-items: center; gap: 8px; }
+.view-bar, .action-bar, .file-actions, .script-actions, .history-actions, .palette-controls, .graph-legends { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.palette-control { display: flex; align-items: center; gap: 8px; }
 .view-bar, .action-bar { justify-content: space-between; }
 .view-bar { margin-bottom: 10px; }
 .brush-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-top: 10px; margin-bottom: 14px; border-top: 1px solid var(--border); }
@@ -249,8 +250,7 @@ h1 { margin: 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.055em; line
 .cell[aria-expanded="true"], button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .graph-footer { display: flex; align-items: center; justify-content: space-between; min-height: 28px; gap: 10px; }
 .legend { display: flex; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
-.legend :first-child { margin-right: 4px; }
-.legend :last-child { margin-left: 4px; }
+.legend-months { margin-right: 5px; font-weight: 600; }
 .legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid #65776b27; border-radius: 3px; }
 .focus-caption { color: var(--muted); font-size: 11px; }
 .action-bar { gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--border); padding: 15px 28px; background: var(--quiet); border-radius: 0 0 19px 19px; }

@@ -15,6 +15,7 @@ interface GraphProps {
   counts: number[]
   levels: number[]
   palette: string[]
+  oddPalette?: string[]
   expanded: boolean
   opensEditor: boolean
   selected?: string
@@ -22,7 +23,7 @@ interface GraphProps {
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, expanded, opensEditor, selected, onSelect,
+  dates, counts, levels, palette, oddPalette, expanded, opensEditor, selected, onSelect,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [focused, setFocused] = useState<string>()
@@ -53,7 +54,9 @@ export const Graph = memo(function Graph({
             style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
           {cells.map(({ date, column, row }, index) => {
             const count = counts[index] ?? 0
-            const color = palette[levels[index] ?? 0]
+            const month = Number(date.slice(5, 7))
+            const colors = oddPalette && month % 2 === 1 ? oddPalette : palette
+            const color = colors[levels[index] ?? 0]
             const style = {
               gridColumn: column + 2, gridRow: row + 2, '--cell-color': color, color: onColor(color),
             } as CSSProperties
@@ -78,13 +81,20 @@ export const Graph = memo(function Graph({
             ? formatDate(focused) + ' · ' + (counts[dates.indexOf(focused)] ?? 0).toLocaleString('en-US')
             : null}
         </span>
-        <div className="legend" aria-label="Contribution intensity from less to more">
-          <span>Less</span>
-          {palette.map((color, level) => <span key={level} className="legend-cell"
-            style={{ background: color }} aria-hidden="true"/>)}
-          <span>More</span>
+        <div className="graph-legends">
+          <Legend colors={palette} months={oddPalette ? 'Even months' : undefined}/>
+          {oddPalette && <Legend colors={oddPalette} months="Odd months"/>}
         </div>
       </div>
     </>
   )
 })
+
+function Legend({ colors, months }: { colors: string[]; months?: string }) {
+  return <div className="legend" aria-label={months ? 'Contribution intensity for ' + months.toLowerCase() : 'Contribution intensity from less to more'}>
+    {months && <span className="legend-months">{months}</span>}
+    <span>Less</span>
+    {colors.map((color) => <span key={color} className="legend-cell" style={{ background: color }} aria-hidden="true"/>)}
+    <span>More</span>
+  </div>
+}

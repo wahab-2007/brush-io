@@ -4,6 +4,7 @@ import { DayEditor } from './components/DayEditor.tsx'
 import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
+import { PaletteSelect } from './components/PaletteSelect.tsx'
 import { fullFill, randomFill } from './lib/brushFill.ts'
 import { playInterfaceSound } from './lib/brushSound.ts'
 import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
@@ -11,7 +12,7 @@ import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
 import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
-import { colorsFor, paletteGroups, schemeFor } from './lib/themes.ts'
+import { colorsFor, schemeFor } from './lib/themes.ts'
 import type { SiteTheme, Theme } from './lib/themes.ts'
 
 type Brush = 'manual' | '1' | '5' | '10' | 'custom'
@@ -46,6 +47,7 @@ export default function App() {
   const [mode, setMode] = useState<SiteTheme>('system')
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [theme, setTheme] = useState<Theme>('green')
+  const [oddTheme, setOddTheme] = useState<Theme | 'same'>('same')
   const [brush, setBrush] = useState<Brush>('manual')
   const [customBrush, setCustomBrush] = useState('1')
   const [sound, setSound] = useState(true)
@@ -57,6 +59,8 @@ export default function App() {
   const upload = useRef<HTMLInputElement>(null)
   const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
+  const oddPalette = useMemo(() => oddTheme === 'same' || oddTheme === theme ? undefined : colorsFor(oddTheme, scheme),
+    [oddTheme, theme, scheme])
   const increment = Number(brush === 'custom' ? customBrush : brush)
   const canPaint = Number.isSafeInteger(increment) && increment > 0
   const currentDates = useMemo(() => yearDates(year), [year])
@@ -110,6 +114,7 @@ export default function App() {
     } else {
       setHistory((state) => setChanges(state, fullFill(days, state.current)))
       setTheme('green')
+      setOddTheme('same')
     }
     setSelection(undefined)
   }
@@ -176,17 +181,10 @@ export default function App() {
 
         <div className="graph-section">
           <div className="view-bar">
-            <label className="palette-control">
-              <span>Palette</span>
-              <select aria-label="Palette" value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
-                {Object.entries(paletteGroups).map(([group, options]) => <optgroup label={group} key={group}>
-                  {Object.entries(options).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                </optgroup>)}
-              </select>
-              <span className="palette-preview" aria-hidden="true">
-                {palette.map((color) => <span style={{ backgroundColor: color }} key={color}/>)}
-              </span>
-            </label>
+            <div className="palette-controls">
+              <PaletteSelect label="Palette" value={theme} colors={palette} onChange={setTheme}/>
+              <PaletteSelect label="Odd months" value={oddTheme} colors={oddPalette} onChange={setOddTheme}/>
+            </div>
             <div className="segmented" role="group" aria-label="Calendar size">
               <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
               <button aria-pressed={expanded} onClick={() => { setExpanded(true); setSelection(undefined) }}>Expanded</button>
@@ -226,7 +224,7 @@ export default function App() {
           </div>
 
           <div className="graph-board">
-            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
+            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} oddPalette={oddPalette} expanded={expanded}
               selected={selection?.date} opensEditor={brush === 'manual'} onSelect={useBrush}/>
           </div>
         </div>
