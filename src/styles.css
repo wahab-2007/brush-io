@@ -270,7 +270,16 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .workspace { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: clip; box-shadow: var(--shadow); }
 .workspace-header { display: flex; align-items: end; justify-content: space-between; gap: 22px; padding: 28px 28px 24px; border-bottom: 1px solid var(--border); }
 .workspace-header p { margin: 0; color: var(--muted); line-height: 1.5; }
-.workspace-header p strong { color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.workspace-header > div { min-width: 0; }
+.workspace-header .canvas-total { font-size: clamp(17px, 2.25vw, 24px); line-height: 1.2; overflow-wrap: anywhere; }
+.canvas-total strong {
+  color: var(--accent-text);
+  font-size: clamp(46px, 6vw, 82px);
+  font-weight: 800;
+  letter-spacing: -.06em;
+  line-height: .98;
+  font-variant-numeric: tabular-nums;
+}
 .year-control { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .year-control select { color: var(--text); }
 .graph-section { padding: 18px 28px 18px; }
@@ -285,7 +294,7 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .density-control { margin-inline: 4px; }
 .density-control input { width: 96px; accent-color: var(--primary); padding: 0; cursor: pointer; }
 .density-control span:last-child { min-width: 3.1em; font-variant-numeric: tabular-nums; }
-.sound-toggle { margin-left: auto; }
+.brush-end { display: flex; align-items: center; gap: 8px; margin-inline-start: auto; }
 .palette-control { position: relative; color: var(--muted); font-size: 13px; }
 button.palette-preview { padding: 6px; color: var(--text); }
 .palette-cubes { display: inline-flex; align-items: center; gap: 3px; }

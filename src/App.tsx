@@ -166,14 +166,9 @@ export default function App() {
       <section className="workspace" aria-label="Contribution canvas">
         <div className="workspace-header">
           <div>
-            <p><strong>{total.toLocaleString('en-US')}</strong> {total === 1n ? 'planned commit' : 'planned commits'} in {year}
+            <p className="canvas-total"><strong>{total.toLocaleString('en-US')}</strong> {total === 1n ? 'planned commit' : 'planned commits'} in {year}
               {total === 0n && <span className="canvas-hint"> · Select a day to start.</span>}</p>
           </div>
-          <label className="year-control"><span>Year</span>
-            <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
-              {years.map((option) => <option key={option}>{option}</option>)}
-            </select>
-          </label>
         </div>
 
         <div className="graph-section">
@@ -214,10 +209,17 @@ export default function App() {
             </label>
             <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
             <button type="button" onClick={() => fillCanvas('full')}>FILL ALL</button>
-            <button className="sound-toggle" type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
-              if (!sound) void playInterfaceSound('click')
-              setSound(!sound)
-            }}>Sound {sound ? 'on' : 'off'}</button>
+            <div className="brush-end">
+              <button type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
+                if (!sound) void playInterfaceSound('click')
+                setSound(!sound)
+              }}>Sound {sound ? 'on' : 'off'}</button>
+              <label className="year-control"><span>Year</span>
+                <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
+                  {years.map((option) => <option key={option}>{option}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
 
           <div className="graph-board">
