@@ -2,6 +2,8 @@
 
 A blank contribution calendar for planning Git commits. Select a year, click a day, and set its count. Use the arrow keys to move between days and Enter to edit. Edits are saved in your browser. Select **Copy Python** or **Download Python** to export the current year.
 
+Choose a **Brush** preset or a custom amount to add commits per click. **Randomize** replaces the current edits with a new plan. The density slider controls how likely each day is to receive an addition. **Full green** fills empty days and selects the green palette. You can undo either fill as one edit. Use **Sound** to mute the soft clicks.
+
 ## Run locally
 
 Use Node.js 24.10 or newer. Run `npm ci` and `npm run dev`. The app uses no API, account data, or server credentials.

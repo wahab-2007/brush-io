@@ -83,6 +83,49 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await page.getByRole('textbox', { name: 'Python script' }).inputValue(), content)
   await page.getByRole('button', { name: 'Close', exact: true }).click()
 
+
+  await page.evaluate(() => {
+    const original = AudioContext.prototype.createOscillator
+    document.documentElement.dataset.soundCount = '0'
+    AudioContext.prototype.createOscillator = function (this: AudioContext) {
+      const root = document.documentElement
+      root.dataset.soundCount = String(Number(root.dataset.soundCount) + 1)
+      return original.call(this)
+    }
+  })
+  const brush = page.getByLabel('Brush', { exact: true })
+  const sound = page.getByRole('button', { name: 'ASMR sound' })
+  await brush.selectOption('5')
+  await page.getByRole('button', { name: '61 planned commits on November 19, 2026' }).click()
+  await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).waitFor()
+  await page.waitForFunction(() => document.documentElement.dataset.soundCount === '1')
+  assert.equal(await page.getByRole('dialog').count(), 0)
+
+  await sound.click()
+  assert.equal(await sound.getAttribute('aria-pressed'), 'false')
+  await brush.selectOption('custom')
+  await page.getByRole('spinbutton', { name: 'Add per click' }).fill('3')
+  await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).click()
+  await page.getByRole('button', { name: '69 planned commits on November 19, 2026' }).waitFor()
+  assert.equal(await page.locator('html').getAttribute('data-sound-count'), '1')
+
+  const density = page.getByRole('slider', { name: 'Random fill density' })
+  await density.press('Home')
+  assert.equal(await density.getAttribute('aria-valuetext'), '0%')
+  await page.getByRole('button', { name: 'Randomize' }).click()
+  await page.getByText('0 planned commits in 2026').waitFor()
+  await density.press('End')
+  await page.getByRole('button', { name: 'Randomize' }).click()
+  assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await page.getByLabel('Palette').selectOption('winter')
+  await page.getByRole('button', { name: 'Full green' }).click()
+  assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
+  assert.equal(await page.getByLabel('Palette').inputValue(), 'green')
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await page.getByText('0 planned commits in 2026').waitFor()
+
   await page.setViewportSize({ width: 375, height: 750 })
   assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
