@@ -261,7 +261,7 @@ button:disabled { opacity: .48; cursor: default; }
 button.primary { background: var(--primary); border-color: var(--primary); color: var(--primary-text); }
 button.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
-.app { max-width: 1240px; margin: 0 auto; padding: 32px 32px 36px; }
+.app { max-width: 1320px; margin: 0 auto; padding: 32px 32px 36px; }
 .appearance { color: var(--text); }
 button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50%; padding: 0; }
 .site-credit { margin-top: 18px; text-align: center; font-size: 12px; }
@@ -294,7 +294,7 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .segmented button { min-height: 27px; border: 0; padding: 0 9px; color: var(--muted); background: transparent; }
 .segmented button[aria-pressed="true"], .segmented button[aria-pressed="true"]:hover { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border); }
 
-.graph-board { background: var(--board); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px 5px; }
+.graph-board { max-width: 1118px; margin-inline: auto; background: var(--board); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px 5px; }
 .graph-scroll { overflow-x: auto; padding: 4px 4px 8px; scrollbar-color: var(--control-border) transparent; }
 .plot {
   --cell: 15px;
