@@ -5,6 +5,7 @@ import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
+import { ToolbarPopover } from './components/ToolbarPopover.tsx'
 import { fillAll, randomFill } from './lib/brushFill.ts'
 import { playInterfaceSound } from './lib/brushSound.ts'
 import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
@@ -164,61 +165,20 @@ export default function App() {
   return (
     <main className="app">
       <section className="workspace" aria-label="Contribution canvas">
-        <div className="workspace-header">
-          <div>
-            <p className="canvas-total"><strong>{total.toLocaleString('en-US')}</strong> {total === 1n ? 'planned commit' : 'planned commits'} in {year}
-              {total === 0n && <span className="canvas-hint"> · Select a day to start.</span>}</p>
-          </div>
-        </div>
-
         <div className="graph-section">
           <div className="view-bar">
             <div className="palette-controls">
               <PaletteSelect label="Palette" value={theme} scheme={scheme} colors={palette} onChange={setTheme}/>
               <PaletteSelect label="Odd months" value={oddTheme} scheme={scheme} colors={oddPalette ?? palette} sharedColors={palette} onChange={setOddTheme}/>
             </div>
-            <div className="segmented" role="group" aria-label="Calendar size">
-              <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
-              <button aria-pressed={expanded} onClick={() => { setExpanded(true); setSelection(undefined) }}>Expanded</button>
-            </div>
-          </div>
-
-          <div className="brush-bar">
-            <label className="brush-control"><span>Brush</span>
-              <select aria-label="Brush" value={brush} onChange={(event) => {
-                setBrush(event.target.value as Brush)
-                setSelection(undefined)
-              }}>
-                <option value="manual">Edit count</option>
-                <option value="1">+1 per click</option>
-                <option value="5">+5 per click</option>
-                <option value="10">+10 per click</option>
-                <option value="custom">Custom amount</option>
+            <div className="view-actions">
+              <div className="segmented" role="group" aria-label="Calendar size">
+                <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
+                <button aria-pressed={expanded} onClick={() => { setExpanded(true); setSelection(undefined) }}>Expanded</button>
+              </div>
+              <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
+                {years.map((option) => <option key={option}>{option}</option>)}
               </select>
-            </label>
-            {brush === 'custom' && <label className="brush-control">
-              <span>Add per click</span>
-              <input type="number" min="1" step="1" value={customBrush} aria-invalid={!canPaint}
-                onChange={(event) => setCustomBrush(event.target.value)}/>
-            </label>}
-            <label className="brush-control density-control">
-              <span>Density</span>
-              <input aria-label="Random fill density" aria-valuetext={density + '%'} type="range" min="0" max="100"
-                value={density} onChange={(event) => setDensity(Number(event.target.value))}/>
-              <span aria-hidden="true">{density}%</span>
-            </label>
-            <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
-            <button type="button" onClick={() => fillCanvas('full')}>FILL ALL</button>
-            <div className="brush-end">
-              <button type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
-                if (!sound) void playInterfaceSound('click')
-                setSound(!sound)
-              }}>Sound {sound ? 'on' : 'off'}</button>
-              <label className="year-control"><span>Year</span>
-                <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
-                  {years.map((option) => <option key={option}>{option}</option>)}
-                </select>
-              </label>
             </div>
           </div>
 
@@ -230,6 +190,37 @@ export default function App() {
 
         <div className="action-bar">
           <div className="history-actions" aria-label="Canvas history">
+            <ToolbarPopover label="Tools">
+              <label className="brush-control"><span>Brush</span>
+                <select aria-label="Brush" value={brush} onChange={(event) => {
+                  setBrush(event.target.value as Brush)
+                  setSelection(undefined)
+                }}>
+                  <option value="manual">Edit count</option>
+                  <option value="1">+1 per click</option>
+                  <option value="5">+5 per click</option>
+                  <option value="10">+10 per click</option>
+                  <option value="custom">Custom amount</option>
+                </select>
+              </label>
+              {brush === 'custom' && <label className="brush-control">
+                <span>Add per click</span>
+                <input type="number" min="1" step="1" value={customBrush} aria-invalid={!canPaint}
+                  onChange={(event) => setCustomBrush(event.target.value)}/>
+              </label>}
+              <label className="brush-control density-control">
+                <span>Density</span>
+                <input aria-label="Random fill density" aria-valuetext={density + '%'} type="range" min="0" max="100"
+                  value={density} onChange={(event) => setDensity(Number(event.target.value))}/>
+                <span aria-hidden="true">{density}%</span>
+              </label>
+              <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
+              <button type="button" onClick={() => fillCanvas('full')}>FILL ALL</button>
+              <button type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
+                if (!sound) void playInterfaceSound('click')
+                setSound(!sound)
+              }}>Sound {sound ? 'on' : 'off'}</button>
+            </ToolbarPopover>
             <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo); setSelection(undefined) }}><Icon name="undo"/></button>
             <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo); setSelection(undefined) }}><Icon name="redo"/></button>
             <button disabled={!total} onClick={() => {
