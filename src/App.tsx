@@ -183,7 +183,7 @@ export default function App() {
           <div className="view-bar">
             <div className="palette-controls">
               <PaletteSelect label="Palette" value={theme} colors={palette} onChange={setTheme}/>
-              <PaletteSelect label="Odd months" value={oddTheme} colors={oddPalette} onChange={setOddTheme}/>
+              <PaletteSelect includeSame label="Odd months" value={oddTheme} colors={oddPalette} onChange={setOddTheme}/>
             </div>
             <div className="segmented" role="group" aria-label="Calendar size">
               <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
