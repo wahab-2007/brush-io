@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { playInterfaceSound, prepareSound } from './brushSound.ts'
 
 function hoverTarget(target: EventTarget | null) {
-  return target instanceof Element ? target.closest('button, select, input, textarea, a, label') : null
+  return target instanceof Element ? target.closest('.plot button.cell') : null
 }
 
 export function useInterfaceSounds(enabled: boolean) {
