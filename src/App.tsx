@@ -56,7 +56,7 @@ export default function App() {
   const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
   const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
-  useInterfaceSounds(true)
+  useInterfaceSounds()
 
   useEffect(() => {
     const query = matchMedia(systemQuery)

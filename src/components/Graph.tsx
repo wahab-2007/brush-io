@@ -2,6 +2,7 @@ import { memo, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatDate, layout } from '../lib/calendar.ts'
 import { onColor } from '../lib/themes.ts'
+import { playInterfaceSound } from '../lib/brushSound.ts'
 import { useCellPaint } from '../lib/useCellPaint.ts'
 import type { PaintDelta } from '../lib/useCellPaint.ts'
 
@@ -50,6 +51,7 @@ export const Graph = memo(function Graph({
     const count = counts[index] ?? 0
     if ((delta === -1 && count === 0) || (delta === 1 && count >= Number.MAX_SAFE_INTEGER)) return
     onPaint(date, delta, stroke)
+    void playInterfaceSound(delta === 1 ? 'add' : 'remove')
   }
 
   const paint = useCellPaint(dates, true, applyPaint)
@@ -128,7 +130,6 @@ export const Graph = memo(function Graph({
 
 function Legend({ colors, months }: { colors: string[]; months?: string }) {
   return <div className="legend" aria-label={months ? 'Contribution intensity for ' + months.toLowerCase() : 'Contribution intensity from less to more'}>
-    {months && <span className="legend-months">{months}</span>}
     <span>Less</span>
     {colors.map((color) => <span key={color} className="legend-cell" style={{ background: color }} aria-hidden="true"/>)}
     <span>More</span>

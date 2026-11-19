@@ -337,7 +337,6 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .graph-footer { display: flex; flex-wrap: wrap; align-items: center; min-height: 28px; gap: 5px 10px; }
 .graph-legends { margin-inline-start: auto; justify-content: flex-end; padding-block: 3px; }
 .legend { display: flex; white-space: nowrap; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
-.legend-months { margin-right: 5px; font-weight: 600; }
 .legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid var(--cell-border, #65776b27); border-radius: 3px; }
 .cell-readout { display: flex; align-items: center; gap: 6px; min-height: 23px; color: var(--muted); font-size: 12px; }
 .cell-readout:empty { min-height: 0; }

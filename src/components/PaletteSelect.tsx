@@ -34,7 +34,6 @@ export function PaletteSelect<T extends Theme | 'same'>({ label, value, colors, 
   }
 
   return <div className="palette-control">
-    <span>{label}</span>
     <button type="button" className="palette-preview" ref={trigger} aria-label={label}
       aria-haspopup="dialog" popoverTarget={id} data-palette={value}>
       <Cubes colors={colors} linked={value === 'same'}/>
