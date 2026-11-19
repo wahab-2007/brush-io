@@ -5,7 +5,8 @@ import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
 import { fullFill, randomFill } from './lib/brushFill.ts'
-import { playBrushSound } from './lib/brushSound.ts'
+import { playInterfaceSound } from './lib/brushSound.ts'
+import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
@@ -62,6 +63,8 @@ export default function App() {
   const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
   const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
+  useInterfaceSounds(sound)
+
   useEffect(() => {
     const query = matchMedia(systemQuery)
     const change = (event: MediaQueryListEvent) => setSystemDark(event.matches)
@@ -89,7 +92,6 @@ export default function App() {
 
   function useBrush(cell: Selection) {
     if (brush === 'manual') {
-      if (sound) void playBrushSound()
       setSelection(cell)
       return
     }
@@ -98,7 +100,6 @@ export default function App() {
       const count = state.current[cell.date] ?? 0
       return setCount(state, cell.date, Math.min(Number.MAX_SAFE_INTEGER, count + increment))
     })
-    if (sound) void playBrushSound()
   }
 
   function fillCanvas(pattern: 'random' | 'full') {
@@ -111,7 +112,6 @@ export default function App() {
       setTheme('green')
     }
     setSelection(undefined)
-    if (sound) void playBrushSound()
   }
 
   function changeYear(next: number) {
@@ -220,7 +220,7 @@ export default function App() {
             <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
             <button type="button" onClick={() => fillCanvas('full')}>Full green</button>
             <button className="sound-toggle" type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
-              if (!sound) void playBrushSound()
+              if (!sound) void playInterfaceSound('click')
               setSound(!sound)
             }}>Sound {sound ? 'on' : 'off'}</button>
           </div>
