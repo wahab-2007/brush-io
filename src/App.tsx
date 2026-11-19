@@ -9,7 +9,7 @@ import type { PaintDelta } from './lib/useCellPaint.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
-import { newHistory, readSession, redo, rememberYear, saveSession, setChanges, setCount, undo } from './lib/session.ts'
+import { newHistory, readActiveYear, readSession, redo, rememberYear, saveSession, setChanges, setCount, undo } from './lib/session.ts'
 import type { History } from './lib/session.ts'
 import type { Changes } from './lib/intensity.ts'
 import { colorsFor, schemeFor } from './lib/themes.ts'
@@ -19,7 +19,7 @@ import { useAppearancePreferences } from './lib/useAppearancePreferences.ts'
 const systemQuery = '(prefers-color-scheme: dark)'
 const scriptName = 'github_contributions.py'
 
-function recover(year?: number) {
+function recover(year: number) {
   try {
     return readSession(window.localStorage, year)
   } catch {
@@ -53,7 +53,15 @@ const YearGraph = memo(function YearGraph({ year, changes, palette, paint }: {
 })
 
 export default function App() {
-  const [position] = useState(() => ({ year: recover()?.year ?? currentYear }))
+  const [position] = useState(() => {
+    try {
+      const saved = readActiveYear(localStorage)
+      if (years.includes(saved)) return { year: saved }
+    } catch {
+      // The calendar can still open when browser storage is unavailable.
+    }
+    return { year: currentYear }
+  })
   const [year, setYear] = useState(position.year)
   const [histories, setHistories] = useState<Record<number, History>>(() =>
     Object.fromEntries(years.map((item) => [item, newHistory(recover(item)?.changes)])))

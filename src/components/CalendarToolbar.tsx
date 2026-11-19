@@ -38,7 +38,7 @@ export function CalendarToolbar(props: CalendarToolbarProps) {
         <ul>
           <li>Scroll inside the calendar to browse years. Click a year on the left to make it active.</li>
           <li>Left-click to add one, right-click to subtract one. Hold to repeat or drag across several cells. You can also use the arrow keys and + or −.</li>
-          <li>Undo, Redo, Clear, and Download Script apply to the active year. Editing a cell also makes its year active.</li>
+          <li>Undo, Redo, Clear, and Download Script apply to the active year. Editing a cell also makes its year active. Try the downloaded script with <code>--dry-run</code> first.</li>
           <li>Choose the chart palette with the color cubes. Your palette and site theme are saved in this browser.</li>
         </ul>
         <a href="https://github.com/wahab-2007/brush-io#tutorial">Read the tutorial</a>

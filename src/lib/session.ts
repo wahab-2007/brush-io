@@ -77,8 +77,12 @@ export function rememberYear(storage: Pick<Storage, 'setItem'>, year: number) {
 }
 
 export function readSession(storage: Pick<Storage, 'getItem'>, year?: number, today?: string) {
-  const stored = storage.getItem(sessionKey(year ?? Number(storage.getItem(activeKey))))
+  const stored = storage.getItem(sessionKey(year ?? readActiveYear(storage)))
   if (!stored) return null
   const session = deserialize(stored, today)
   return year === undefined || year === session.year ? session : null
+}
+
+export function readActiveYear(storage: Pick<Storage, 'getItem'>) {
+  return Number(storage.getItem(activeKey))
 }
