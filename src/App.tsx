@@ -10,7 +10,7 @@ import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
 import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
 import { colorsFor, schemeFor } from './lib/themes.ts'
-import type { SiteTheme, Theme } from './lib/themes.ts'
+import { useAppearancePreferences } from './lib/useAppearancePreferences.ts'
 
 
 const systemQuery = '(prefers-color-scheme: dark)'
@@ -40,10 +40,8 @@ export default function App() {
   const [initial] = useState(recover)
   const [year, setYear] = useState(initial?.year ?? currentYear)
   const [history, setHistory] = useState(() => newHistory(initial?.changes))
-  const [mode, setMode] = useState<SiteTheme>('system')
+  const [{ mode, theme, oddTheme }, setAppearance] = useAppearancePreferences()
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
-  const [theme, setTheme] = useState<Theme>('green')
-  const [oddTheme, setOddTheme] = useState<Theme | 'same'>('same')
   const [expanded, setExpanded] = useState(false)
   const [notice, setNotice] = useState('')
   const [copyFallback, setCopyFallback] = useState<string>()
@@ -133,8 +131,8 @@ export default function App() {
         <div className="graph-section">
           <div className="view-bar">
             <div className="palette-controls">
-              <PaletteSelect label="Palette" value={theme} scheme={scheme} colors={palette} onChange={setTheme}/>
-              <PaletteSelect label="Odd months" value={oddTheme} scheme={scheme} colors={oddPalette ?? palette} sharedColors={palette} onChange={setOddTheme}/>
+              <PaletteSelect label="Palette" value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>
+              <PaletteSelect label="Odd months" value={oddTheme} scheme={scheme} colors={oddPalette ?? palette} sharedColors={palette} onChange={(oddTheme) => setAppearance((current) => ({ ...current, oddTheme }))}/>
             </div>
             <div className="view-actions">
               <div className="segmented" role="group" aria-label="Calendar size">
@@ -178,7 +176,7 @@ export default function App() {
           <div className="script-actions">
             <button disabled={!total} onClick={() => void exportScript(true)}><Icon name="copy"/>Copy Python</button>
             <button className="primary" disabled={!total} onClick={() => void exportScript(false)}><Icon name="code"/>Download Python</button>
-            <Appearance theme={mode} onChange={setMode}/>
+            <Appearance theme={mode} onChange={(mode) => setAppearance((current) => ({ ...current, mode }))}/>
           </div>
         </div>
         <div className={notice ? 'notice' : 'notice visually-hidden'} role="status">{notice}</div>
