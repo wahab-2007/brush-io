@@ -87,7 +87,10 @@ h1 { margin: 0; font-size: clamp(20px, 4vw, 27px); letter-spacing: -.035em; line
 .brush-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .brush-control { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .brush-control select, .brush-control input { color: var(--text); }
-.brush-control input { width: 84px; }
+.brush-control input[type="number"] { width: 84px; }
+.density-control { margin-inline: 4px; }
+.density-control input { width: 96px; accent-color: var(--primary); padding: 0; cursor: pointer; }
+.density-control span:last-child { min-width: 3.1em; font-variant-numeric: tabular-nums; }
 .sound-toggle { margin-left: auto; }
 .palette-control { position: relative; color: var(--muted); font-size: 13px; }
 .palette-control select { padding-left: 25px; min-width: 112px; color: var(--text); }

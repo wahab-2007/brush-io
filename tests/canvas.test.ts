@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { fullFill, randomFill } from '../src/lib/brushFill.ts'
 import { layout, yearDates } from '../src/lib/calendar.ts'
 import { summarize } from '../src/lib/intensity.ts'
 import { createPlan, generatePython } from '../src/lib/pythonGenerator.ts'
@@ -53,4 +54,22 @@ test('script plans preserve exact positive counts and exclude future dates', () 
   const additions = createPlan([...dates, '2026-11-20'], { [today]: 98, '2026-11-20': 3, '2026-11-18': 0 }, today)
   assert.deepEqual(additions, [[today, 98]])
   assert.match(generatePython(additions), /PLAN = \[\["2026-11-19",98\]\]/)
+})
+
+test('random and full fills preserve the baseline and can be undone as a single edit', () => {
+  const days = [
+    { date: '2025-01-01', originalCount: 0 },
+    { date: '2025-01-02', originalCount: 10 },
+    { date: '2025-01-03', originalCount: Number.MAX_SAFE_INTEGER },
+  ]
+  assert.deepEqual(randomFill(days, 0, () => 0), {})
+  assert.deepEqual(randomFill(days, 100, () => 0.5), { '2025-01-01': 5, '2025-01-02': 15 })
+  let index = 0
+  const samples = [0.1, 0.8, 0.6]
+  assert.deepEqual(randomFill(days, 50, () => samples[index++]), { '2025-01-01': 7 })
+  const before = { '2025-01-02': 0 }
+  const filled = fullFill(days, before)
+  assert.deepEqual(filled, { '2025-01-01': 1 })
+  assert.deepEqual(fullFill(days, { '2025-01-01': 7 }), { '2025-01-01': 7 })
+  assert.deepEqual(undo(setChanges(newHistory(before), filled)).current, before)
 })

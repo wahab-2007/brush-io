@@ -3,6 +3,7 @@ import { DayEditor } from './components/DayEditor.tsx'
 import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
+import { fullFill, randomFill } from './lib/brushFill.ts'
 import { playBrushSound } from './lib/brushSound.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
@@ -46,6 +47,7 @@ export default function App() {
   const [brush, setBrush] = useState<Brush>('manual')
   const [customBrush, setCustomBrush] = useState('1')
   const [sound, setSound] = useState(true)
+  const [density, setDensity] = useState(50)
   const [expanded, setExpanded] = useState(false)
   const [selection, setSelection] = useState<Selection>()
   const [notice, setNotice] = useState('')
@@ -94,6 +96,19 @@ export default function App() {
       const count = state.current[cell.date] ?? 0
       return setCount(state, cell.date, Math.min(Number.MAX_SAFE_INTEGER, count + increment))
     })
+    if (sound) void playBrushSound()
+  }
+
+  function fillCanvas(pattern: 'random' | 'full') {
+    const days = currentDates.map((date) => ({ date, originalCount: 0 }))
+    if (pattern === 'random') {
+      const randomized = randomFill(days, density)
+      setHistory((state) => setChanges(state, randomized))
+    } else {
+      setHistory((state) => setChanges(state, fullFill(days, state.current)))
+      setTheme('green')
+    }
+    setSelection(undefined)
     if (sound) void playBrushSound()
   }
 
@@ -198,6 +213,14 @@ export default function App() {
               <input type="number" min="1" step="1" value={customBrush} aria-invalid={!canPaint}
                 onChange={(event) => setCustomBrush(event.target.value)}/>
             </label>}
+            <label className="brush-control density-control">
+              <span>Density</span>
+              <input aria-label="Random fill density" aria-valuetext={density + '%'} type="range" min="0" max="100"
+                value={density} onChange={(event) => setDensity(Number(event.target.value))}/>
+              <span aria-hidden="true">{density}%</span>
+            </label>
+            <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
+            <button type="button" onClick={() => fillCanvas('full')}>Full green</button>
             <button className="sound-toggle" type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
               if (!sound) void playBrushSound()
               setSound(!sound)
