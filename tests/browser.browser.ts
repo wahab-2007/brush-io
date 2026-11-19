@@ -1,0 +1,91 @@
+import assert from 'node:assert/strict'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
+import { createServer } from 'node:http'
+import { once } from 'node:events'
+import type { AddressInfo } from 'node:net'
+import { test } from 'node:test'
+import { chromium } from 'playwright-core'
+
+test('the static Pages build edits, saves, copies, and downloads a blank canvas', { timeout: 45_000 }, async (t) => {
+  const server = createServer(async (req, res) => {
+    const file = req.url?.slice('/brush-io/'.length) || 'index.html'
+    if (req.url?.startsWith('/brush-io/') &&
+        /^(index\.html|favicon\.svg|assets\/[\w.-]+\.(js|css))$/.test(file)) {
+      const types: Record<string, string> = { html: 'text/html', svg: 'image/svg+xml', js: 'text/javascript', css: 'text/css' }
+      try {
+        res.setHeader('Content-Type', types[file.split('.').at(-1)!])
+        res.end(await readFile(new URL('../dist/' + file, import.meta.url)))
+        return
+      } catch {
+        res.writeHead(500).end()
+        return
+      }
+    }
+    res.writeHead(404).end()
+  }).listen(0, '127.0.0.1')
+  t.after(() => server.close())
+  await once(server, 'listening')
+  const port = (server.address() as AddressInfo).port
+  const executablePath = process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)
+  const browser = await chromium.launch({ executablePath })
+  t.after(() => browser.close())
+  const page = await browser.newPage({ permissions: ['clipboard-read', 'clipboard-write'], viewport: { width: 1200, height: 800 } })
+  const failed: string[] = []
+  const requests: string[] = []
+  page.on('pageerror', (error) => failed.push(error.message))
+  page.on('response', (response) => { if (response.status() >= 400) failed.push(response.url()) })
+  page.on('request', (request) => requests.push(request.url()))
+  await page.clock.setFixedTime(new Date('2026-11-19T18:00:00Z'))
+  const origin = 'http://127.0.0.1:' + port + '/brush-io/'
+  await page.goto(origin)
+  const downloadButton = page.getByRole('button', { name: 'Download Python' })
+  await page.getByText('0 planned commits in 2026').waitFor()
+  assert.equal(await downloadButton.isDisabled(), true)
+  assert.equal(await page.getByLabel('GitHub username').count(), 0)
+
+  await page.getByRole('button', { name: '0 planned commits on November 19, 2026' }).click()
+  const dialog = page.getByRole('dialog', { name: 'November 19, 2026' })
+  await dialog.getByLabel('Planned commits').fill('61')
+  await dialog.getByRole('button', { name: 'Apply' }).click()
+  await page.getByText('61 planned commits in 2026').waitFor()
+  await page.getByRole('button', { name: 'Expanded', exact: true }).click()
+  const selected = page.getByRole('button', { name: '61 planned commits on November 19, 2026' })
+  assert.equal(await selected.textContent(), '61')
+  const green = await selected.evaluate((node) => getComputedStyle(node).backgroundColor)
+  await page.getByLabel('Palette').selectOption('halloween')
+  assert.notEqual(await selected.evaluate((node) => getComputedStyle(node).backgroundColor), green)
+  await page.getByLabel('Appearance').selectOption('dark')
+  assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await page.getByText('0 planned commits in 2026').waitFor()
+  await page.getByRole('button', { name: 'Redo', exact: true }).click()
+  await page.getByText('61 planned commits in 2026').waitFor()
+  await page.getByLabel('Year').selectOption('2025')
+  await page.getByText('0 planned commits in 2025').waitFor()
+  await page.getByLabel('Year').selectOption('2026')
+  await page.reload()
+  await page.getByText('61 planned commits in 2026').waitFor()
+
+  const [script] = await Promise.all([page.waitForEvent('download'), downloadButton.click()])
+  assert.equal(script.suggestedFilename(), 'github_contributions.py')
+  const content = await readFile(await script.path(), 'utf8')
+  assert.match(content, /PLAN = \[\["2026-11-19",61\]\]/)
+  await page.getByRole('button', { name: 'Copy Python' }).click()
+  await page.getByText('Copied the Python script for 61 commits.').waitFor()
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), content)
+
+  await page.evaluate(() => Object.defineProperty(navigator.clipboard, 'writeText', {
+    value: () => Promise.reject(new Error('Permission denied')),
+  }))
+  await page.getByRole('button', { name: 'Copy Python' }).click()
+  assert.equal(await page.getByRole('textbox', { name: 'Python script' }).inputValue(), content)
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
+
+  await page.setViewportSize({ width: 375, height: 750 })
+  assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
+  assert.ok(requests.every((url) => url.startsWith(origin) || url.startsWith('blob:')))
+  assert.deepEqual(failed, [])
+})
