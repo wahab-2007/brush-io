@@ -26,6 +26,7 @@ export const Graph = memo(function Graph({
   dates, counts, levels, palette, oddPalette, expanded, opensEditor, selected, onSelect,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
+  const [hovered, setHovered] = useState<string>()
   const [focused, setFocused] = useState<string>()
   const [rangeStart, setRangeStart] = useState(dates[0])
   const buttons = useRef(new Map<string, HTMLButtonElement>())
@@ -35,6 +36,16 @@ export const Graph = memo(function Graph({
     '--weeks': columns,
     '--digits': digits,
   } as CSSProperties
+
+  function cellColor(date: string, index: number) {
+    const colors = oddPalette && Number(date.slice(5, 7)) % 2 === 1 ? oddPalette : palette
+    return colors[levels[index] ?? 0]
+  }
+
+  const activeDate = hovered ?? focused
+  const activeIndex = activeDate ? dates.indexOf(activeDate) : -1
+  const activeCount = counts[activeIndex] ?? 0
+  const activeColor = activeDate ? cellColor(activeDate, activeIndex) : palette[0]
 
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const offsets: Record<string, number> = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }
@@ -54,9 +65,7 @@ export const Graph = memo(function Graph({
             style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
           {cells.map(({ date, column, row }, index) => {
             const count = counts[index] ?? 0
-            const month = Number(date.slice(5, 7))
-            const colors = oddPalette && month % 2 === 1 ? oddPalette : palette
-            const color = colors[levels[index] ?? 0]
+            const color = cellColor(date, index)
             const style = {
               gridColumn: column + 2, gridRow: row + 2, '--cell-color': color, color: onColor(color),
             } as CSSProperties
@@ -65,8 +74,12 @@ export const Graph = memo(function Graph({
               ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
               tabIndex={tabDate === date ? 0 : -1} aria-label={label}
               aria-haspopup={opensEditor ? 'dialog' : undefined} aria-expanded={opensEditor ? date === selected : undefined}
-              title={label}
-              onFocus={() => { setRangeStart(date); setFocused(date) }}
+              onPointerEnter={(event) => { if (event.pointerType !== 'touch') setHovered(date) }}
+              onPointerLeave={() => setHovered(undefined)}
+              onFocus={(event) => {
+                setRangeStart(date)
+                if (event.currentTarget.matches(':focus-visible')) setFocused(date)
+              }}
               onBlur={() => setFocused(undefined)}
               onClick={(event) => { onSelect({ date, anchor: event.currentTarget }) }}
               onKeyDown={(event) => navigate(event, index)}>
@@ -76,11 +89,15 @@ export const Graph = memo(function Graph({
         </div>
       </div>
       <div className="graph-footer">
-        <span className="focus-caption" aria-hidden="true">
-          {focused && !selected && dates.includes(focused)
-            ? formatDate(focused) + ' · ' + (counts[dates.indexOf(focused)] ?? 0).toLocaleString('en-US')
-            : null}
-        </span>
+        <div className="cell-readout" aria-hidden="true">
+          {activeDate && activeIndex >= 0 && <>
+            <span>{formatDate(activeDate)}</span>
+            <span className="readout-number" style={{ color: activeColor, backgroundColor: onColor(activeColor) }}>
+              {activeCount.toLocaleString('en-US')}
+            </span>
+            <span>{activeCount === 1 ? 'commit' : 'commits'}</span>
+          </>}
+        </div>
         <div className="graph-legends">
           <Legend colors={palette} months={oddPalette ? 'Even months' : undefined}/>
           {oddPalette && <Legend colors={oddPalette} months="Odd months"/>}

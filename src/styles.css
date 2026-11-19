@@ -249,11 +249,12 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .cell[aria-expanded="true"], button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .graph-footer { display: flex; flex-wrap: wrap; align-items: center; min-height: 28px; gap: 5px 10px; }
 .graph-legends { margin-inline-start: auto; justify-content: flex-end; padding-block: 3px; }
-.focus-caption:empty { display: none; }
 .legend { display: flex; white-space: nowrap; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
 .legend-months { margin-right: 5px; font-weight: 600; }
 .legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid #65776b27; border-radius: 3px; }
-.focus-caption { color: var(--muted); font-size: 11px; }
+.cell-readout { display: flex; align-items: center; gap: 6px; min-height: 23px; color: var(--muted); font-size: 12px; }
+.cell-readout:empty { min-height: 0; }
+.readout-number { border-radius: 4px; padding: 2px 6px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .action-bar { gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--border); padding: 15px 28px; background: var(--quiet); }
 .file-actions, .script-actions, .history-actions { flex-wrap: wrap; }
 .notice { border-top: 1px solid var(--border); padding: 12px 28px; font-size: 13px; color: var(--muted); }
