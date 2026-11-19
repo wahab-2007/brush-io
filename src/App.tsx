@@ -155,12 +155,11 @@ export default function App() {
           <div className="history-actions" aria-label="Canvas history">
             <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo) }}><Icon name="undo"/></button>
             <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo) }}><Icon name="redo"/></button>
-            <button disabled={!total} onClick={() => {
+            <button className="history-button" aria-label="Clear canvas" title="Clear canvas" disabled={!total} onClick={() => {
               setHistory((state) => setChanges(state, {}))
               setCopyFallback(undefined)
-              setNotice('Canvas cleared.')
             }}>
-              <Icon name="reset"/>Clear canvas
+              <Icon name="close"/>
             </button>
           </div>
           <div className="file-actions">

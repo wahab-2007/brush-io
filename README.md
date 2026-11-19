@@ -5,7 +5,7 @@
 ## Tutorial
 
 1. Open [Brush IO](https://wahab-2007.github.io/brush-io/). Choose a year beside **Normal** and **Expanded**.
-2. Left-click a cell to add one and right-click to subtract one. Hold either mouse button to repeat faster over time, or drag across cells to paint them in one stroke. Adding and subtracting have distinct sounds. Hovering shows the date and count silently. Use **Undo** to reverse a stroke.
+2. Left-click a cell to add one and right-click to subtract one. Hold either mouse button to repeat faster over time, or drag across cells to paint them in one stroke. Adding and subtracting have distinct sounds. Hovering shows the date and count silently. Use **Undo** to reverse a stroke or the circular **X** to clear the chart.
 3. Use the arrow keys to move between cells, **Enter** or **+** to add, and **−** to subtract. On a touchscreen, tap to add.
 4. Click the chart color cubes to change palettes. The second picker controls odd months. Use the site theme selector in the footer to change the rest of the page. The site theme and both chart palettes are saved in your browser. **Disco** has a separate music control.
 5. Select **Copy Python** or **Download Python**, then follow [Run the generated script](#run-the-generated-script). Use the JSON export to back up the current canvas.
