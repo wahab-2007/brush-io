@@ -4,6 +4,7 @@
   font-size: 14px;
   --page: #eef3ef;
   --credit: #656a73;
+  --credit-link: #0969da;
   --surface: #fff;
   --quiet: #f7f9f7;
   --text: #192822;
@@ -25,6 +26,7 @@
   color-scheme: dark;
   --page: #131b18;
   --credit: #a4aab4;
+  --credit-link: #79c0ff;
   --surface: #1a2520;
   --quiet: #202c26;
   --text: #edf5ef;
@@ -264,11 +266,10 @@ button.primary:hover:not(:disabled) { background: var(--primary-hover); border-c
 .app { max-width: 1320px; margin: 0 auto; padding: 32px 32px 36px; }
 .appearance { inline-size: 104px; color: var(--text); text-overflow: ellipsis; }
 button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50%; padding: 0; }
-.site-credit { margin-top: 18px; text-align: center; font-size: 12px; }
-.site-credit a { color: var(--credit); text-decoration: none; }
+.site-credit { color: var(--credit); margin-top: 18px; text-align: center; font-size: 12px; }
+.site-credit a { color: var(--credit-link); text-decoration: none; }
 .site-credit a:hover, .site-credit a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .workspace { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: clip; box-shadow: var(--shadow); }
-.graph-section { padding: 18px 28px 18px; }
 .calendar-toolbar { display: flex; align-items: center; gap: 8px; }
 button.palette-preview { padding: 6px; color: var(--text); }
 .palette-cubes { display: inline-flex; align-items: center; gap: 3px; }
@@ -332,7 +333,6 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 
 @media (max-width: 700px) {
   .app { padding: 14px 14px 28px; }
-  .graph-section { padding: 12px 15px; }
   .notice { padding: 10px 15px; }
 }
 
@@ -349,6 +349,11 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .calendar-toolbar button, .calendar-toolbar select { border-radius: 10px; transition: background-color .15s, border-color .15s; }
 .calendar-toolbar button.history-button { border-radius: 50%; }
 .help-button { font-size: 16px; }
+button.history-button[data-action="undo"] { --action-color: #75243b; --action-hover: #8e2f49; }
+button.history-button[data-action="redo"] { --action-color: #195cc0; --action-hover: #216bd6; }
+button.history-button[data-action="clear"] { --action-color: #b22234; --action-hover: #cb2d40; }
+.calendar-toolbar button.history-button[data-action] { color: #fff; background: var(--action-color); border-color: var(--action-color); }
+.calendar-toolbar button.history-button[data-action]:hover:not(:disabled) { background: var(--action-hover); border-color: var(--action-hover); }
 .calendar-help {
   width: min(390px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
@@ -372,20 +377,19 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 
 .calendar-viewport {
   --year-height: 222px;
-  max-height: calc(2 * var(--year-height) + 2px);
+  max-height: calc(2 * var(--year-height));
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
   background: var(--board);
-  border: 1px solid var(--border);
-  border-radius: 13px;
 }
+.calendar-viewport:focus-visible { outline-offset: -2px; }
 .calendar-year {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 8px;
   height: var(--year-height);
-  padding: 10px 9px 4px;
+  padding: 12px 16px 4px;
   border-bottom: 1px solid var(--border);
 }
 .calendar-year:last-child { border-bottom: 0; }

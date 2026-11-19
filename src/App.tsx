@@ -136,15 +136,13 @@ export default function App() {
         appearance={<Appearance theme={mode} onChange={(mode) => setAppearance((current) => ({ ...current, mode }))}/>}/>
 
       <section className="workspace" aria-label="Contribution canvas">
-        <div className="graph-section">
-          <CalendarViewport years={years} activeYear={year} position={position} onActivate={setYear}
-            renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} paint={paintCell}/>}/>
-        </div>
+        <CalendarViewport years={years} activeYear={year} position={position} onActivate={setYear}
+          renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} paint={paintCell}/>}/>
         {notice && <div className="notice" role="alert">{notice}</div>}
       </section>
 
       <footer className="site-credit">
-        <a href="https://github.com/wahab-2007">Made by @wahab-2007</a>
+        Made by <a href="https://github.com/wahab-2007">@wahab-2007</a>
       </footer>
     </main>
   )

@@ -20,11 +20,11 @@ export function CalendarToolbar(props: CalendarToolbarProps) {
   const helpId = useId()
   return <header className="toolbar-wrap">
     <div className="calendar-toolbar" role="group" aria-label="Calendar toolbar">
-      <button className="history-button" aria-label="Undo" title={'Undo in ' + props.year}
+      <button className="history-button" data-action="undo" aria-label="Undo" title={'Undo in ' + props.year}
         disabled={!props.canUndo} onClick={props.onUndo}><Icon name="undo"/></button>
-      <button className="history-button" aria-label="Redo" title={'Redo in ' + props.year}
+      <button className="history-button" data-action="redo" aria-label="Redo" title={'Redo in ' + props.year}
         disabled={!props.canRedo} onClick={props.onRedo}><Icon name="redo"/></button>
-      <button className="history-button" aria-label="Clear canvas" title={'Clear ' + props.year}
+      <button className="history-button" data-action="clear" aria-label="Clear canvas" title={'Clear ' + props.year}
         disabled={!props.canClear} onClick={props.onClear}><Icon name="close"/></button>
       {props.palette}
       <button className="primary" disabled={!props.canDownload} title={'Download script for ' + props.year}
