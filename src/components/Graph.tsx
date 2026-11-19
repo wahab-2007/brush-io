@@ -2,13 +2,10 @@ import { memo, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatDate, layout } from '../lib/calendar.ts'
 import { onColor } from '../lib/themes.ts'
+import { useCellPaint } from '../lib/useCellPaint.ts'
+import type { PaintDelta } from '../lib/useCellPaint.ts'
 
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-export interface Selection {
-  date: string
-  anchor: HTMLButtonElement
-}
 
 interface GraphProps {
   dates: string[]
@@ -17,13 +14,11 @@ interface GraphProps {
   palette: string[]
   oddPalette?: string[]
   expanded: boolean
-  opensEditor: boolean
-  selected?: string
-  onSelect: (selection: Selection) => void
+  onPaint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, oddPalette, expanded, opensEditor, selected, onSelect,
+  dates, counts, levels, palette, oddPalette, expanded, onPaint,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [hovered, setHovered] = useState<string>()
@@ -46,6 +41,18 @@ export const Graph = memo(function Graph({
   const activeIndex = activeDate ? dates.indexOf(activeDate) : -1
   const activeCount = counts[activeIndex] ?? 0
   const activeColor = activeDate ? cellColor(activeDate, activeIndex) : palette[0]
+
+  const cellsByDate = useMemo(() => new Map(dates.map((date, index) => [date, index])), [dates])
+
+  function applyPaint(date: string, delta: PaintDelta, stroke: symbol) {
+    const index = cellsByDate.get(date)
+    if (index === undefined) return
+    const count = counts[index] ?? 0
+    if ((delta === -1 && count === 0) || (delta === 1 && count >= Number.MAX_SAFE_INTEGER)) return
+    onPaint(date, delta, stroke)
+  }
+
+  const paint = useCellPaint(dates, true, applyPaint)
 
   function navigate(event: KeyboardEvent<HTMLButtonElement>, index: number) {
     const offsets: Record<string, number> = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }
@@ -73,16 +80,28 @@ export const Graph = memo(function Graph({
             return <button type="button" key={date} className="cell" style={style}
               ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
               tabIndex={tabDate === date ? 0 : -1} aria-label={label}
-              aria-haspopup={opensEditor ? 'dialog' : undefined} aria-expanded={opensEditor ? date === selected : undefined}
-              onPointerEnter={(event) => { if (event.pointerType !== 'touch') setHovered(date) }}
-              onPointerLeave={() => setHovered(undefined)}
+              onPointerDown={(event) => paint.start(date, event)}
+              onPointerEnter={(event) => {
+                if (event.pointerType !== 'touch') setHovered(date)
+                paint.enter(date, event)
+              }}
+              onPointerLeave={() => { setHovered(undefined); paint.leave(date) }}
+              onContextMenu={(event) => event.preventDefault()}
               onFocus={(event) => {
                 setRangeStart(date)
                 if (event.currentTarget.matches(':focus-visible')) setFocused(date)
               }}
               onBlur={() => setFocused(undefined)}
-              onClick={(event) => { onSelect({ date, anchor: event.currentTarget }) }}
-              onKeyDown={(event) => navigate(event, index)}>
+              onClick={(event) => {
+                const touch = event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === 'touch'
+                if (event.detail === 0 || touch) applyPaint(date, 1, Symbol())
+              }}
+              onKeyDown={(event) => {
+                if (['+', '=', '-'].includes(event.key)) {
+                  event.preventDefault()
+                  applyPaint(date, event.key === '-' ? -1 : 1, Symbol())
+                } else navigate(event, index)
+              }}>
               {expanded && count > 0 ? count : null}
             </button>
           })}

@@ -10,23 +10,25 @@ export interface History {
   past: Changes[]
   current: Changes
   future: Changes[]
+  stroke?: symbol
 }
 
 export const newHistory = (current: Changes = {}): History => ({ past: [], current, future: [] })
 
-export function setChanges(history: History, current: Changes): History {
+export function setChanges(history: History, current: Changes, stroke?: symbol): History {
   const keys = Object.keys(current)
   if (keys.length === Object.keys(history.current).length &&
       keys.every((date) => current[date] === history.current[date])) return history
-  return { past: [...history.past, history.current], current, future: [] }
+  const past = stroke && stroke === history.stroke ? history.past : [...history.past, history.current]
+  return { past, current, future: [], stroke }
 }
 
-export function setCount(history: History, date: string, count: number): History {
+export function setCount(history: History, date: string, count: number, stroke?: symbol): History {
   if (!validCount(count)) return history
   const next = { ...history.current }
   if (count === 0) delete next[date]
   else next[date] = count
-  return setChanges(history, next)
+  return setChanges(history, next, stroke)
 }
 
 export function undo({ past, current, future }: History): History {

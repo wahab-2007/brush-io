@@ -1,15 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Appearance } from './components/Appearance.tsx'
-import { DayEditor } from './components/DayEditor.tsx'
 import { Graph } from './components/Graph.tsx'
-import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
-import { Presets } from './components/Presets.tsx'
-import { ToolbarPopover } from './components/ToolbarPopover.tsx'
-import { fillAll, randomFill } from './lib/brushFill.ts'
-import { playInterfaceSound } from './lib/brushSound.ts'
 import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
+import type { PaintDelta } from './lib/useCellPaint.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
@@ -17,7 +12,6 @@ import { deserialize, newHistory, readSession, redo, saveSession, serialize, set
 import { colorsFor, schemeFor } from './lib/themes.ts'
 import type { SiteTheme, Theme } from './lib/themes.ts'
 
-type Brush = 'manual' | '1' | '5' | '10' | 'custom'
 
 const systemQuery = '(prefers-color-scheme: dark)'
 const scriptName = 'github_contributions.py'
@@ -50,12 +44,7 @@ export default function App() {
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [theme, setTheme] = useState<Theme>('green')
   const [oddTheme, setOddTheme] = useState<Theme | 'same'>('same')
-  const [brush, setBrush] = useState<Brush>('manual')
-  const [customBrush, setCustomBrush] = useState('1')
-  const [sound, setSound] = useState(true)
-  const [density, setDensity] = useState(50)
   const [expanded, setExpanded] = useState(false)
-  const [selection, setSelection] = useState<Selection>()
   const [notice, setNotice] = useState('')
   const [copyFallback, setCopyFallback] = useState<string>()
   const upload = useRef<HTMLInputElement>(null)
@@ -63,13 +52,11 @@ export default function App() {
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
   const oddPalette = useMemo(() => oddTheme === 'same' || oddTheme === theme ? undefined : colorsFor(oddTheme, scheme),
     [oddTheme, theme, scheme])
-  const increment = Number(brush === 'custom' ? customBrush : brush)
-  const canPaint = Number.isSafeInteger(increment) && increment > 0
   const currentDates = useMemo(() => yearDates(year), [year])
   const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
   const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
-  useInterfaceSounds(sound)
+  useInterfaceSounds(true)
 
   useEffect(() => {
     const query = matchMedia(systemQuery)
@@ -91,38 +78,16 @@ export default function App() {
     }
   }, [year, history.current])
 
-  const closeEditor = useCallback((focus: boolean) => {
-    if (focus) selection?.anchor.focus()
-    setSelection(undefined)
-  }, [selection])
-
-  function useBrush(cell: Selection) {
-    if (brush === 'manual') {
-      setSelection(cell)
-      return
-    }
-    if (!canPaint) return
+  function paintCell(date: string, delta: PaintDelta, stroke: symbol) {
     setHistory((state) => {
-      const count = state.current[cell.date] ?? 0
-      return setCount(state, cell.date, Math.min(Number.MAX_SAFE_INTEGER, count + increment))
+      const count = state.current[date] ?? 0
+      return setCount(state, date, Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, count + delta)), stroke)
     })
-  }
-
-  function fillCanvas(pattern: 'random' | 'full') {
-    const days = currentDates.map((date) => ({ date, originalCount: 0 }))
-    if (pattern === 'random') {
-      const randomized = randomFill(days, density)
-      setHistory((state) => setChanges(state, randomized))
-    } else {
-      setHistory((state) => setChanges(state, fillAll(days, state.current)))
-    }
-    setSelection(undefined)
   }
 
   function changeYear(next: number) {
     setYear(next)
     setHistory(newHistory(recover(next)?.changes))
-    setSelection(undefined)
     setCopyFallback(undefined)
     setNotice('')
   }
@@ -134,7 +99,6 @@ export default function App() {
       const imported = deserialize(await file.text())
       setYear(imported.year)
       setHistory(newHistory(imported.changes))
-      setSelection(undefined)
       setCopyFallback(undefined)
       setNotice('Canvas imported.')
     } catch (error) {
@@ -174,8 +138,8 @@ export default function App() {
             </div>
             <div className="view-actions">
               <div className="segmented" role="group" aria-label="Calendar size">
-                <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
-                <button aria-pressed={expanded} onClick={() => { setExpanded(true); setSelection(undefined) }}>Expanded</button>
+                <button aria-pressed={!expanded} onClick={() => { setExpanded(false) }}>Normal</button>
+                <button aria-pressed={expanded} onClick={() => { setExpanded(true) }}>Expanded</button>
               </div>
               <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
                 {years.map((option) => <option key={option}>{option}</option>)}
@@ -185,61 +149,16 @@ export default function App() {
 
           <div className="graph-board">
             <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} oddPalette={oddPalette} expanded={expanded}
-              selected={selection?.date} opensEditor={brush === 'manual'} onSelect={useBrush}/>
+              onPaint={paintCell}/>
           </div>
         </div>
 
         <div className="action-bar">
           <div className="history-actions" aria-label="Canvas history">
-            <Presets canSave capture={() => ({
-              canvas: serialize({ year, changes: history.current }), theme, oddTheme, expanded,
-            })} restore={(preset) => {
-              const session = deserialize(preset.canvas)
-              setYear(session.year)
-              setHistory(newHistory(session.changes))
-              setSelection(undefined)
-              setCopyFallback(undefined)
-              setNotice('')
-              setTheme(preset.theme)
-              setOddTheme(preset.oddTheme)
-              setExpanded(preset.expanded)
-            }}/>
-            <ToolbarPopover label="Tools">
-              <label className="brush-control"><span>Brush</span>
-                <select aria-label="Brush" value={brush} onChange={(event) => {
-                  setBrush(event.target.value as Brush)
-                  setSelection(undefined)
-                }}>
-                  <option value="manual">Edit count</option>
-                  <option value="1">+1 per click</option>
-                  <option value="5">+5 per click</option>
-                  <option value="10">+10 per click</option>
-                  <option value="custom">Custom amount</option>
-                </select>
-              </label>
-              {brush === 'custom' && <label className="brush-control">
-                <span>Add per click</span>
-                <input type="number" min="1" step="1" value={customBrush} aria-invalid={!canPaint}
-                  onChange={(event) => setCustomBrush(event.target.value)}/>
-              </label>}
-              <label className="brush-control density-control">
-                <span>Density</span>
-                <input aria-label="Random fill density" aria-valuetext={density + '%'} type="range" min="0" max="100"
-                  value={density} onChange={(event) => setDensity(Number(event.target.value))}/>
-                <span aria-hidden="true">{density}%</span>
-              </label>
-              <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
-              <button type="button" onClick={() => fillCanvas('full')}>FILL ALL</button>
-              <button type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
-                if (!sound) void playInterfaceSound('click')
-                setSound(!sound)
-              }}>Sound {sound ? 'on' : 'off'}</button>
-            </ToolbarPopover>
-            <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo); setSelection(undefined) }}><Icon name="undo"/></button>
-            <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo); setSelection(undefined) }}><Icon name="redo"/></button>
+            <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo) }}><Icon name="undo"/></button>
+            <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo) }}><Icon name="redo"/></button>
             <button disabled={!total} onClick={() => {
               setHistory((state) => setChanges(state, {}))
-              setSelection(undefined)
               setCopyFallback(undefined)
               setNotice('Canvas cleared.')
             }}>
@@ -273,9 +192,6 @@ export default function App() {
         <a href="https://github.com/wahab-2007">Made by @wahab-2007</a>
       </footer>
 
-      {selection && <DayEditor key={selection.date} selection={selection}
-        count={history.current[selection.date] ?? 0} onUpdate={(count) => setHistory((state) => setCount(state, selection.date, count))}
-        onClose={closeEditor}/>}
     </main>
   )
 }

@@ -274,31 +274,6 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .view-bar, .action-bar { justify-content: space-between; }
 .view-bar { flex-wrap: wrap; gap: 10px 16px; margin-bottom: 10px; }
 .view-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.toolbar-popover {
-  position: fixed;
-  width: min(370px, calc(100vw - 24px));
-  max-height: calc(100dvh - 24px);
-  overflow: auto;
-  padding: 12px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--control-border);
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-}
-.toolbar-popover:popover-open { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-@supports (position-area: top span-right) {
-  .toolbar-popover { margin: 6px; position-area: top span-right; position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline; }
-}
-.preset-row { display: flex; align-items: center; gap: 8px; width: 100%; }
-.preset-row input, .preset-row select { flex: 1; min-width: 0; }
-.preset-status { width: 100%; margin: 0; font-size: 13px; color: var(--muted); }
-.brush-control { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
-.brush-control select, .brush-control input { color: var(--text); }
-.brush-control input[type="number"] { width: 84px; }
-.density-control { margin-inline: 4px; }
-.density-control input { width: 96px; accent-color: var(--primary); padding: 0; cursor: pointer; }
-.density-control span:last-child { min-width: 3.1em; font-variant-numeric: tabular-nums; }
 .palette-control { position: relative; color: var(--muted); font-size: 13px; }
 button.palette-preview { padding: 6px; color: var(--text); }
 .palette-cubes { display: inline-flex; align-items: center; gap: 3px; }
@@ -329,7 +304,9 @@ button.palette-preview { padding: 6px; color: var(--text); }
 
 .graph-board { max-width: 1118px; margin-inline: auto; background: var(--board); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px 5px; }
 .graph-scroll { overflow-x: auto; padding: 4px 4px 8px; scrollbar-color: var(--control-border) transparent; }
+button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .plot {
+  user-select: none;
   --cell: 15px;
   --gap: 4px;
   display: grid;
@@ -357,7 +334,6 @@ button.palette-preview { padding: 6px; color: var(--text); }
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.cell[aria-expanded="true"], button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .graph-footer { display: flex; flex-wrap: wrap; align-items: center; min-height: 28px; gap: 5px 10px; }
 .graph-legends { margin-inline-start: auto; justify-content: flex-end; padding-block: 3px; }
 .legend { display: flex; white-space: nowrap; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
@@ -371,19 +347,9 @@ button.palette-preview { padding: 6px; color: var(--text); }
 .notice { border-top: 1px solid var(--border); padding: 12px 28px; font-size: 13px; color: var(--muted); }
 .notice[role="alert"] { color: var(--error); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); padding: 0; border: 0; }
-.day-editor { z-index: 1; position: fixed; width: min(280px, calc(100vw - 20px)); border: 1px solid var(--control-border); border-radius: 10px; padding: 13px; background: var(--surface); box-shadow: 0 10px 35px #0003; }
-.day-title, .day-actions, .stepper { display: flex; align-items: center; gap: 7px; }
-.day-title { justify-content: space-between; margin-bottom: 8px; }
-.day-title .icon-button { min-height: 25px; padding: 0 4px; border: none; }
-
 .copy-panel { display: grid; gap: 8px; padding: 10px 28px 16px; }
 .copy-panel div { display: flex; align-items: center; justify-content: space-between; }
 .copy-panel textarea { width: 100%; min-height: 160px; resize: vertical; padding: 8px; border: 1px solid var(--border); border-radius: 9px; background: var(--quiet); color: var(--text); }
-.day-editor label { font-size: 12px; font-weight: 600; }
-.stepper { margin: 5px 0 11px; }
-.stepper input { width: 100%; min-width: 0; }
-.stepper button { min-width: 35px; }
-.day-actions { justify-content: end; }
 
 @media (max-width: 700px) {
   .app { padding: 14px 14px 28px; }
