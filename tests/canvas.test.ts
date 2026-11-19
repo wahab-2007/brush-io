@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { colorsFor, paletteGroups, schemeFor } from '../src/lib/themes.ts'
+import { cellColor, colorsFor, paletteGroups, schemeFor } from '../src/lib/themes.ts'
 import type { Theme } from '../src/lib/themes.ts'
 import { layout, yearDates } from '../src/lib/calendar.ts'
 import { summarize } from '../src/lib/intensity.ts'
@@ -72,13 +72,23 @@ test('a paint stroke across days undoes as one edit', () => {
 
 test('chart palettes stay distinct under independent site themes', () => {
   const themes = Object.values(paletteGroups).flatMap((group) => Object.keys(group)) as Theme[]
-  assert.equal(new Set(themes).size, 17)
+  assert.equal(new Set(themes).size, 18)
   for (const theme of themes) {
     const light = colorsFor(theme, schemeFor('paper', false))
     const dark = colorsFor(theme, schemeFor('disco', false))
-    assert.equal(new Set(light).size, 5)
-    assert.equal(new Set(dark).size, 5)
+    assert.equal(new Set(light).size, theme === 'rainbow' ? 8 : 5)
+    assert.equal(new Set(dark).size, theme === 'rainbow' ? 8 : 5)
     assert.notDeepEqual(light, dark)
   }
   assert.deepEqual(colorsFor('blackWhite', 'light'), ['#ffffff', '#cccccc', '#888888', '#444444', '#000000'])
+})
+
+test('Rainbow keeps empty cells neutral and uses distinct hues for counts up to seven', () => {
+  for (const scheme of ['light', 'dark'] as const) {
+    const palette = colorsFor('rainbow', scheme)
+    assert.deepEqual(Array.from({ length: 8 }, (_, count) => cellColor('rainbow', palette, count, 4)), palette)
+    assert.equal(cellColor('rainbow', palette, 181, 1), palette[7])
+  }
+  const green = colorsFor('green', 'dark')
+  assert.equal(cellColor('green', green, 181, 2), green[2])
 })

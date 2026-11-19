@@ -30,7 +30,7 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   const executablePath = process.env.CHROMIUM_PATH || (existsSync('/usr/bin/chromium') ? '/usr/bin/chromium' : undefined)
   const browser = await chromium.launch({ executablePath })
   t.after(() => browser.close())
-  const page = await browser.newPage({ viewport: { width: 1200, height: 800 } })
+  const page = await browser.newPage({ colorScheme: 'light', viewport: { width: 1200, height: 800 } })
   const failed: string[] = []
   const requests: string[] = []
   page.on('pageerror', (error) => failed.push(error.message))
@@ -51,14 +51,31 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   const yearRow = (year: number) => viewport.getByRole('region', { name: year + ' calendar', exact: true })
   const toolbar = page.getByRole('group', { name: 'Calendar toolbar' })
   assert.equal(await page.getByLabel('Year', { exact: true }).count(), 0)
-  assert.deepEqual(await toolbar.locator(':scope > button, :scope > .theme-controls select').evaluateAll((controls) =>
+  assert.deepEqual(await toolbar.locator(':scope > button, .toolbar-appearance > button, .toolbar-appearance select').evaluateAll((controls) =>
     controls.map((control) => control.getAttribute('aria-label') ?? control.textContent?.trim())),
   ['Undo', 'Redo', 'Clear canvas', 'Palette', 'Download Script', 'Help', 'Site theme'])
   assert.equal(await toolbar.evaluate((element) => {
     const { x, width } = element.getBoundingClientRect()
     return Math.abs(x + width / 2 - innerWidth / 2) < 2
   }), true)
-  assert.equal(await toolbar.getByLabel('Site theme').evaluate((element) => element.getBoundingClientRect().width), 104)
+  const themePicker = toolbar.getByLabel('Site theme')
+  assert.ok(await themePicker.evaluate((element) => element.getBoundingClientRect().width > 104))
+  assert.equal(await themePicker.locator('option[value="light"], option[value="dark"]').count(), 0)
+  assert.equal(await viewport.evaluate((element) =>
+    element.parentElement?.classList.contains('workspace') &&
+    getComputedStyle(element).borderTopWidth === '0px' &&
+    getComputedStyle(element.parentElement).borderTopWidth === '1px'), true)
+  const profileLink = page.getByRole('link', { name: '@wahab-2007', exact: true })
+  assert.equal(await profileLink.getAttribute('href'), 'https://github.com/wahab-2007')
+  assert.equal(await profileLink.evaluate((element) => getComputedStyle(element).color), 'rgb(9, 105, 218)')
+  for (const [label, color] of [
+    ['Undo', 'rgb(117, 36, 59)'],
+    ['Redo', 'rgb(25, 92, 192)'],
+    ['Clear canvas', 'rgb(178, 34, 52)'],
+  ]) {
+    assert.equal(await toolbar.getByRole('button', { name: label, exact: true }).evaluate((element) =>
+      getComputedStyle(element).backgroundColor), color)
+  }
   assert.equal(await page.getByText('Less', { exact: true }).count(), 0)
   assert.equal(await page.getByText('More', { exact: true }).count(), 0)
   await cell(firstDay, 2025).waitFor()
@@ -156,9 +173,20 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
     await page.getByRole('button', { name: label, exact: true }).click()
     await page.getByRole('dialog', { name: label + ' choices' }).getByRole('button', { name, exact: true }).click()
   }
+  await choosePalette('Palette', 'Rainbow')
+  const paintColor = () => cell(firstDay).evaluate((element) => getComputedStyle(element).backgroundColor)
+  assert.equal(await paintColor(), 'rgb(239, 242, 245)')
+  await cell(firstDay).click()
+  assert.equal(await paintColor(), 'rgb(219, 48, 71)')
+  await cell(firstDay).click()
+  assert.equal(await paintColor(), 'rgb(227, 106, 22)')
+  await toolbar.getByRole('button', { name: 'Undo', exact: true }).click()
+  await toolbar.getByRole('button', { name: 'Undo', exact: true }).click()
+  assert.equal(await count(firstDay), 0)
   await choosePalette('Palette', 'Plum')
   const appearance = page.getByLabel('Site theme', { exact: true })
-  await appearance.selectOption('true-dark')
+  await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ mode: 'dark', theme: 'plum' })),
+    'brush-io:appearance:v1')
   await page.reload()
   await cell(lastDay).waitFor()
   assert.equal(await count(lastDay), initial + 1)
@@ -218,6 +246,9 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await appearance.selectOption('true-dark')
   assert.equal(await page.locator('audio').evaluate((audio) => (audio as HTMLAudioElement).paused), true)
   await page.setViewportSize({ width: 375, height: 750 })
+  const helpBox = await toolbar.getByRole('button', { name: 'Help', exact: true }).boundingBox()
+  const themeBox = await themePicker.boundingBox()
+  assert.ok(helpBox && themeBox && helpBox.x < themeBox.x && Math.abs(helpBox.y - themeBox.y) < 2)
   assert.equal(await yearRow(2026).locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
   assert.ok(requests.every((url) => url.startsWith(origin) || url.startsWith('blob:')))
