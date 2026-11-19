@@ -2,9 +2,9 @@
 
 A blank contribution calendar for planning Git commits. Select a year, click a day, and set its count. Use the arrow keys to move between days and Enter to edit. Edits are saved in your browser. Select **Copy Python** or **Download Python** to export the current year.
 
-Choose a **Brush** preset or a custom amount to add commits per click. **Randomize** replaces the current edits with a new plan. The density slider controls how likely each day is to receive an addition. **Full green** fills empty days and selects the green palette. You can undo either fill as one edit. Use **Sound** to mute the soft clicks.
+Choose a **Brush** preset or a custom amount to add commits per click. **Randomize** replaces the current edits with a new plan. The density slider controls how likely each day is to receive an addition. **Full green** fills empty days and selects the green palette. You can undo either fill as one edit. Use **Sound** to mute the gentle feedback for clicks, hovers, and slider changes. Hover feedback starts after the browser receives a click or keypress.
 
-**Site theme** changes the workspace colors. **Palette** changes the calendar independently and includes Mono and Black & White. Select **Disco** for a light show and an original looping track. **Pause music** controls the track separately from brush sounds.
+**Site theme** changes the workspace colors. **Palette** changes the calendar independently and includes Mono and Black & White. Use **Odd months** to pick a second palette for January, March, May, July, September, and November. Select **Disco** for a light show and an original looping track. **Pause music** controls the track separately from brush sounds.
 
 ## Run locally
 

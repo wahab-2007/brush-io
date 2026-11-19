@@ -102,11 +102,17 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
 
   await page.evaluate(() => {
     const original = AudioContext.prototype.createOscillator
-    document.documentElement.dataset.soundCount = '0'
     AudioContext.prototype.createOscillator = function (this: AudioContext) {
-      const root = document.documentElement
-      root.dataset.soundCount = String(Number(root.dataset.soundCount) + 1)
-      return original.call(this)
+      const tone = original.call(this)
+      const parameter = tone.frequency
+      const setValueAtTime = parameter.setValueAtTime.bind(parameter)
+      parameter.setValueAtTime = (value, time) => {
+        const cue = value === 470 ? 'clickSounds' : value === 610 ? 'hoverSounds' : 'sliderSounds'
+        const data = document.documentElement.dataset
+        data[cue] = String(Number(data[cue] ?? '0') + 1)
+        return setValueAtTime(value, time)
+      }
+      return tone
     }
   })
   const brush = page.getByLabel('Brush', { exact: true })
@@ -114,16 +120,32 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await brush.selectOption('5')
   await page.getByRole('button', { name: '61 planned commits on November 19, 2026' }).click()
   await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).waitFor()
-  await page.waitForFunction(() => document.documentElement.dataset.soundCount === '1')
+  await page.waitForFunction(() => Number(document.documentElement.dataset.clickSounds) > 0)
+  await page.getByRole('button', { name: 'Full green' }).hover()
+  await page.waitForFunction(() => Number(document.documentElement.dataset.hoverSounds) > 0)
+  await page.getByRole('slider', { name: 'Random fill density' }).press('ArrowRight')
+  await page.waitForFunction(() => Number(document.documentElement.dataset.sliderSounds) > 0)
   assert.equal(await page.getByRole('dialog').count(), 0)
 
   await sound.click()
   assert.equal(await sound.getAttribute('aria-pressed'), 'false')
+  const mutedClickCount = await page.locator('html').getAttribute('data-click-sounds')
   await brush.selectOption('custom')
   await page.getByRole('spinbutton', { name: 'Add per click' }).fill('3')
   await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).click()
   await page.getByRole('button', { name: '69 planned commits on November 19, 2026' }).waitFor()
-  assert.equal(await page.locator('html').getAttribute('data-sound-count'), '1')
+  assert.equal(await page.locator('html').getAttribute('data-click-sounds'), mutedClickCount)
+
+  assert.deepEqual(await page.locator('.weekday').allTextContents(), ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'])
+  for (const label of ['Undo', 'Redo']) {
+    const button = page.getByRole('button', { name: label, exact: true })
+    assert.equal(await button.textContent(), '')
+    assert.equal(await button.evaluate((element) => {
+      const { width, height } = element.getBoundingClientRect()
+      return width === height && getComputedStyle(element).borderRadius === '50%'
+    }), true)
+  }
+  assert.equal(await page.getByText('Site theme', { exact: true }).count(), 0)
 
   const density = page.getByRole('slider', { name: 'Random fill density' })
   await density.press('Home')
@@ -139,6 +161,18 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByRole('button', { name: 'Full green' }).click()
   assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
   assert.equal(await page.getByLabel('Palette').inputValue(), 'green')
+  const january = page.getByRole('button', { name: '1 planned commit on January 15, 2026', exact: true })
+  const february = page.getByRole('button', { name: '1 planned commit on February 15, 2026', exact: true })
+  const januaryBefore = await january.evaluate((element) => getComputedStyle(element).backgroundColor)
+  const februaryBefore = await february.evaluate((element) => getComputedStyle(element).backgroundColor)
+  const oddMonths = page.getByLabel('Odd months', { exact: true })
+  await oddMonths.selectOption('winter')
+  assert.notEqual(await january.evaluate((element) => getComputedStyle(element).backgroundColor), januaryBefore)
+  assert.equal(await february.evaluate((element) => getComputedStyle(element).backgroundColor), februaryBefore)
+  assert.deepEqual(await page.locator('.legend-months').allTextContents(), ['Even months', 'Odd months'])
+  await oddMonths.selectOption('same')
+  assert.equal(await january.evaluate((element) => getComputedStyle(element).backgroundColor), januaryBefore)
+
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await page.getByText('0 planned commits in 2026').waitFor()
 

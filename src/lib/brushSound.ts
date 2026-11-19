@@ -17,7 +17,7 @@ export async function prepareSound() {
 }
 
 export async function playInterfaceSound(cue: Cue, pitch = 1) {
-  if (cue === 'click' && audio?.state !== 'running') await prepareSound()
+  if (cue !== 'hover' && audio?.state !== 'running') await prepareSound()
   if (audio?.state !== 'running') return
   const { high, low, gain, duration } = sounds[cue]
   const start = audio.currentTime
