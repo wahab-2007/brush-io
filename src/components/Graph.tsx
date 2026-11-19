@@ -3,7 +3,7 @@ import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatDate, layout } from '../lib/calendar.ts'
 import { onColor } from '../lib/themes.ts'
 
-const weekdays = ['Mon', 'Wed', 'Fri']
+const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export interface Selection {
   date: string
@@ -50,7 +50,7 @@ export const Graph = memo(function Graph({
           {months.map(({ label, column }) => <span className="month" key={label}
             style={{ gridColumn: column + 2, gridRow: 1 }}>{label}</span>)}
           {weekdays.map((label, index) => <span className="weekday" key={label}
-            style={{ gridColumn: 1, gridRow: index * 2 + 3 }}>{label}</span>)}
+            style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
           {cells.map(({ date, column, row }, index) => {
             const count = counts[index] ?? 0
             const color = palette[levels[index] ?? 0]
