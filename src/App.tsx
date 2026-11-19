@@ -54,7 +54,7 @@ export default function App() {
   const [copyFallback, setCopyFallback] = useState<string>()
   const upload = useRef<HTMLInputElement>(null)
   const scheme = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode
-  const palette = colorsFor(theme, scheme)
+  const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
   const increment = Number(brush === 'custom' ? customBrush : brush)
   const canPaint = Number.isSafeInteger(increment) && increment > 0
   const currentDates = useMemo(() => yearDates(year), [year])
@@ -183,11 +183,25 @@ export default function App() {
 
         <div className="graph-section">
           <div className="view-bar">
-            <label className="palette-control"><span>Palette</span>
-              <span className="palette-dot" style={{ backgroundColor: palette[3] }} aria-hidden="true"/>
+              <label className="palette-control">
+              <span>Palette</span>
               <select aria-label="Palette" value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
-                {Object.entries(themes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                <optgroup label="Classic">
+                  <option value="green">Green</option>
+                  <option value="halloween">Halloween</option>
+                  <option value="winter">Winter</option>
+                </optgroup>
+                <optgroup label="Color">
+                  {Object.entries(themes).slice(3, -2).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                </optgroup>
+                <optgroup label="Grayscale">
+                  <option value="mono">Mono</option>
+                  <option value="blackWhite">Black &amp; White</option>
+                </optgroup>
               </select>
+              <span className="palette-preview" aria-hidden="true">
+                {palette.map((color) => <span style={{ backgroundColor: color }} key={color}/>)}
+              </span>
             </label>
             <div className="segmented" role="group" aria-label="Calendar size">
               <button aria-pressed={!expanded} onClick={() => { setExpanded(false); setSelection(undefined) }}>Normal</button>
