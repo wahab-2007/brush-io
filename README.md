@@ -1,10 +1,15 @@
 # Brush IO
 
-A blank contribution calendar for planning Git commits. Select a year, click a day, and set its count. Use the arrow keys to move between days and Enter to edit. Edits are saved in your browser. Select **Copy Python** or **Download Python** to export the current year.
+[Open Brush IO](https://wahab-2007.github.io/brush-io/) · [Tutorial](#tutorial)
 
-Choose a **Brush** preset or a custom amount to add commits per click. **Randomize** replaces the current edits with a new plan. The density slider controls how likely each day is to receive an addition. **FILL ALL** adds one to every displayed day. You can undo either fill as one edit. Use **Sound** to mute the gentle feedback for clicks, hovering over calendar cells, and slider changes. Hover feedback starts after the browser receives a click or keypress.
+## Tutorial
 
-**Site theme** changes the workspace colors. Click the **Palette** cubes to change the calendar independently and includes Mono and Black & White. Use **Odd months** to pick a second palette for January, March, May, July, September, and November. Select **Disco** for a light show and an original looping track. **Pause music** controls the track separately from brush sounds.
+1. Open [Brush IO](https://wahab-2007.github.io/brush-io/). Choose a year beside **Normal** and **Expanded**.
+2. Click a day, set its commit count, and select **Apply**. Use the arrow keys to move between days and Enter to edit.
+3. Open **Tools** in the footer to choose a brush, adjust random fill density, use **Randomize** or **FILL ALL**, or toggle sound. **FILL ALL** adds one to every day.
+4. Click the **Palette** cubes to recolor the chart. Choose an **Odd months** palette to alternate colors. Use the site theme selector in the footer to change the rest of the page. **Disco** has a separate music control.
+5. Open **Presets** in the footer, enter a name, and select **Save**. The browser keeps your calendar, palettes, and chart size. Pick a saved preset and select **Load** to restore it, or **Delete** to remove it.
+6. Select **Copy Python** or **Download Python**, then follow [Run the generated script](#run-the-generated-script). Use the JSON export to back up the current canvas.
 
 ## Run locally
 

@@ -40,16 +40,27 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   const origin = 'http://127.0.0.1:' + port + '/brush-io/'
   await page.goto(origin)
   const downloadButton = page.getByRole('button', { name: 'Download Python' })
-  await page.getByText('0 planned commits in 2026').waitFor()
-  const summary = page.locator('.canvas-total')
-  assert.equal(await summary.evaluate((element) => {
-    const count = element.querySelector('strong')!
-    return parseFloat(getComputedStyle(count).fontSize) >= 46 &&
-      parseFloat(getComputedStyle(count).fontSize) > 2 * parseFloat(getComputedStyle(element).fontSize)
-  }), true)
-  const soundBox = await page.getByRole('button', { name: 'ASMR sound' }).boundingBox()
+  async function waitForTotal(expected: number) {
+    await page.waitForFunction((total) => {
+      const cells = [...document.querySelectorAll('button.cell')]
+      return cells.length > 0 && cells.reduce((sum, cell) =>
+        sum + Number(cell.getAttribute('aria-label')?.split(' ')[0].replaceAll(',', '')), 0) === total
+    }, expected)
+  }
+
+  async function openTools() {
+    if (!await page.getByRole('dialog', { name: 'Tools', exact: true }).isVisible()) {
+      await page.getByRole('button', { name: 'Tools', exact: true }).click()
+    }
+  }
+
+  await waitForTotal(0)
+  assert.equal(await page.getByText('Year', { exact: true }).count(), 0)
+  assert.equal(await page.locator('.canvas-total, .brush-bar').count(), 0)
+  assert.equal(await page.getByLabel('Brush', { exact: true }).isVisible(), false)
+  const expandedBox = await page.getByRole('button', { name: 'Expanded', exact: true }).boundingBox()
   const yearBox = await page.getByLabel('Year', { exact: true }).boundingBox()
-  assert.ok(soundBox && yearBox && yearBox.x >= soundBox.x + soundBox.width)
+  assert.ok(expandedBox && yearBox && yearBox.x >= expandedBox.x + expandedBox.width)
 
   assert.equal(await page.getByRole('heading', { name: /Contribution (canvas|calendar)/i }).count(), 0)
   assert.equal(await page.locator('.workspace').evaluate((panel) => getComputedStyle(panel).overflow), 'clip')
@@ -71,7 +82,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   const dialog = page.getByRole('dialog', { name: 'November 19, 2026' })
   await dialog.getByLabel('Planned commits').fill('61')
   await dialog.getByRole('button', { name: 'Apply' }).click()
-  await page.getByText('61 planned commits in 2026').waitFor()
+  await waitForTotal(61)
   await page.getByRole('button', { name: 'Expanded', exact: true }).click()
   const selected = page.getByRole('button', { name: '61 planned commits on November 19, 2026' })
   assert.equal(await selected.textContent(), '61')
@@ -95,19 +106,19 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
 
   await page.getByRole('button', { name: 'Clear canvas' }).click()
-  await page.getByText('0 planned commits in 2026').waitFor()
+  await waitForTotal(0)
   assert.equal(await downloadButton.isDisabled(), true)
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
-  await page.getByText('61 planned commits in 2026').waitFor()
+  await waitForTotal(61)
   await page.getByRole('button', { name: 'Redo', exact: true }).click()
-  await page.getByText('0 planned commits in 2026').waitFor()
+  await waitForTotal(0)
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
-  await page.getByText('61 planned commits in 2026').waitFor()
+  await waitForTotal(61)
   await page.getByLabel('Year').selectOption('2025')
-  await page.getByText('0 planned commits in 2025').waitFor()
+  await waitForTotal(0)
   await page.getByLabel('Year').selectOption('2026')
   await page.reload()
-  await page.getByText('61 planned commits in 2026').waitFor()
+  await waitForTotal(61)
 
   const [script] = await Promise.all([page.waitForEvent('download'), downloadButton.click()])
   assert.equal(script.suggestedFilename(), 'github_contributions.py')
@@ -142,21 +153,25 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   })
   const brush = page.getByLabel('Brush', { exact: true })
   const sound = page.getByRole('button', { name: 'ASMR sound' })
+  await openTools()
   await brush.selectOption('5')
   await page.getByRole('button', { name: '61 planned commits on November 19, 2026' }).click()
   await page.getByRole('button', { name: '66 planned commits on November 19, 2026' }).waitFor()
   await page.waitForFunction(() => Number(document.documentElement.dataset.clickSounds) > 0)
   const hoverCount = () => page.locator('html').getAttribute('data-hover-sounds')
   const beforeControlHover = await hoverCount()
+  await openTools()
   await page.getByRole('button', { name: 'FILL ALL' }).hover()
   assert.equal(await hoverCount(), beforeControlHover)
+  await page.keyboard.press('Escape')
   await page.waitForTimeout(55)
   await page.locator('button.cell').first().hover()
   assert.notEqual(await hoverCount(), beforeControlHover)
   await page.waitForFunction(() => Number(document.documentElement.dataset.hoverSounds) > 0)
+  await openTools()
   await page.getByRole('slider', { name: 'Random fill density' }).press('ArrowRight')
   await page.waitForFunction(() => Number(document.documentElement.dataset.sliderSounds) > 0)
-  assert.equal(await page.getByRole('dialog').count(), 0)
+  assert.equal(await page.getByRole('dialog', { name: /November/ }).count(), 0)
 
   await sound.click()
   assert.equal(await sound.getAttribute('aria-pressed'), 'false')
@@ -178,23 +193,25 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   }
   assert.equal(await page.getByText('Site theme', { exact: true }).count(), 0)
 
+  await openTools()
   const density = page.getByRole('slider', { name: 'Random fill density' })
   await density.press('Home')
   assert.equal(await density.getAttribute('aria-valuetext'), '0%')
   await page.getByRole('button', { name: 'Randomize' }).click()
-  await page.getByText('0 planned commits in 2026').waitFor()
+  await waitForTotal(0)
   await density.press('End')
   await page.getByRole('button', { name: 'Randomize' }).click()
   assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await choosePalette('Palette', 'Winter')
+  await openTools()
   const fillAllButton = page.getByRole('button', { name: 'FILL ALL' })
   const dayCount = await page.locator('button.cell').count()
   await fillAllButton.click()
-  await page.getByText((dayCount + 0).toLocaleString('en-US') + ' planned commits in 2026').waitFor()
+  await waitForTotal(dayCount + 0)
   await fillAllButton.click()
-  await page.getByText((dayCount * 2 + 0).toLocaleString('en-US') + ' planned commits in 2026').waitFor()
+  await waitForTotal(dayCount * 2 + 0)
   await page.getByRole('button', { name: '2 planned commits on January 15, 2026', exact: true }).waitFor()
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   assert.equal(await page.getByRole('button', { name: /^0 planned commits on / }).count(), 0)
@@ -211,7 +228,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await january.evaluate((element) => getComputedStyle(element).backgroundColor), januaryBefore)
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
-  await page.getByText('0 planned commits in 2026').waitFor()
+  await waitForTotal(0)
 
 
   const appearance = page.getByLabel('Site theme', { exact: true })
@@ -262,6 +279,38 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
     return player?.paused && player.currentTime === 0
   }), true)
   assert.equal(await palette.getAttribute('data-palette'), 'blackWhite')
+
+  await openTools()
+  await page.getByRole('button', { name: 'FILL ALL' }).click()
+  const savedTotal = await page.locator('button.cell').count() + 0
+  await waitForTotal(savedTotal)
+  await choosePalette('Palette', 'Winter')
+  await choosePalette('Odd months', 'Green')
+  await page.getByRole('button', { name: 'Expanded', exact: true }).click()
+  const presets = page.getByRole('dialog', { name: 'Presets', exact: true })
+  await page.getByRole('button', { name: 'Presets', exact: true }).click()
+  await presets.getByLabel('Preset name').fill('Saved calendar')
+  await presets.getByRole('button', { name: 'Save', exact: true }).click()
+  await presets.getByText('Preset saved.').waitFor()
+  await page.getByRole('button', { name: 'Clear canvas' }).click()
+  await waitForTotal(0)
+  await page.getByLabel('Year', { exact: true }).selectOption('2025')
+  await page.reload()
+  await waitForTotal(0)
+  await page.getByRole('button', { name: 'Presets', exact: true }).click()
+  await presets.getByLabel('Saved presets', { exact: true }).selectOption('Saved calendar')
+  await presets.getByRole('button', { name: 'Load', exact: true }).click()
+  await presets.getByText('Preset loaded.').waitFor()
+  await waitForTotal(savedTotal)
+  assert.equal(await page.getByLabel('Year', { exact: true }).inputValue(), '2026')
+  assert.equal(await palette.getAttribute('data-palette'), 'winter')
+  assert.equal(await page.getByRole('button', { name: 'Odd months', exact: true }).getAttribute('data-palette'), 'green')
+  assert.equal(await page.getByRole('button', { name: 'Expanded', exact: true }).getAttribute('aria-pressed'), 'true')
+  await presets.getByRole('button', { name: 'Delete', exact: true }).click()
+  await presets.getByText('Preset deleted.').waitFor()
+  assert.equal(await presets.getByLabel('Saved presets').locator('option').count(), 1)
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Normal', exact: true }).click()
 
   const size = (selector: string) => page.locator(selector).evaluate((node) => node.getBoundingClientRect().width)
   const tileWidth = await size('button.cell:first-of-type')
