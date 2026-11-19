@@ -84,7 +84,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.scheme = scheme
-    document.documentElement.dataset.siteTheme = mode
+    document.documentElement.dataset.siteTheme = mode === 'system' ? 'true-' + scheme : mode
   }, [scheme, mode])
 
   useEffect(() => {

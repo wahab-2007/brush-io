@@ -13,10 +13,11 @@ const paletteNames = new Set(Object.values(paletteGroups).flatMap((group) => Obj
 
 function readAppearance(): AppearancePreferences {
   try {
-    const value = JSON.parse(localStorage.getItem(key) ?? 'null') as Partial<AppearancePreferences> | null
+    const value = JSON.parse(localStorage.getItem(key) ?? 'null') as { mode?: string; theme?: Theme } | null
     if (!value || typeof value !== 'object') return defaults
+    const mode = value.mode === 'light' ? 'true-light' : value.mode === 'dark' ? 'true-dark' : value.mode
     return {
-      mode: value.mode && Object.hasOwn(siteThemes, value.mode) ? value.mode : defaults.mode,
+      mode: typeof mode === 'string' && Object.hasOwn(siteThemes, mode) ? mode as SiteTheme : defaults.mode,
       theme: value.theme && paletteNames.has(value.theme) ? value.theme : defaults.theme,
     }
   } catch {

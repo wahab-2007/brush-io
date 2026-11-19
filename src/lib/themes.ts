@@ -2,8 +2,6 @@ export type Scheme = 'light' | 'dark'
 
 export const siteThemes = {
   system: 'System',
-  light: 'Light',
-  dark: 'Dark',
   'true-light': 'True Light',
   'true-dark': 'True Dark',
   'white-high-contrast': 'White High Contrast',
@@ -16,7 +14,7 @@ export const siteThemes = {
 } as const
 export type SiteTheme = keyof typeof siteThemes
 
-const darkThemes: readonly SiteTheme[] = ['dark', 'true-dark', 'black-high-contrast', 'lagoon', 'ink', 'disco']
+const darkThemes: readonly SiteTheme[] = ['true-dark', 'black-high-contrast', 'lagoon', 'ink', 'disco']
 
 export function schemeFor(theme: SiteTheme, systemDark: boolean): Scheme {
   if (theme === 'system') return systemDark ? 'dark' : 'light'
