@@ -5,7 +5,7 @@ import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
-import { fullFill, randomFill } from './lib/brushFill.ts'
+import { fillAll, randomFill } from './lib/brushFill.ts'
 import { playInterfaceSound } from './lib/brushSound.ts'
 import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
@@ -112,9 +112,7 @@ export default function App() {
       const randomized = randomFill(days, density)
       setHistory((state) => setChanges(state, randomized))
     } else {
-      setHistory((state) => setChanges(state, fullFill(days, state.current)))
-      setTheme('green')
-      setOddTheme('same')
+      setHistory((state) => setChanges(state, fillAll(days, state.current)))
     }
     setSelection(undefined)
   }
@@ -215,7 +213,7 @@ export default function App() {
               <span aria-hidden="true">{density}%</span>
             </label>
             <button type="button" onClick={() => fillCanvas('random')}>Randomize</button>
-            <button type="button" onClick={() => fillCanvas('full')}>Full green</button>
+            <button type="button" onClick={() => fillCanvas('full')}>FILL ALL</button>
             <button className="sound-toggle" type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
               if (!sound) void playInterfaceSound('click')
               setSound(!sound)

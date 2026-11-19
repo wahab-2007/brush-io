@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { colorsFor, paletteGroups, schemeFor } from '../src/lib/themes.ts'
 import type { Theme } from '../src/lib/themes.ts'
-import { fullFill, randomFill } from '../src/lib/brushFill.ts'
+import { fillAll, randomFill } from '../src/lib/brushFill.ts'
 import { layout, yearDates } from '../src/lib/calendar.ts'
 import { summarize } from '../src/lib/intensity.ts'
 import { createPlan, generatePython } from '../src/lib/pythonGenerator.ts'
@@ -70,9 +70,10 @@ test('random and full fills preserve the baseline and can be undone as a single 
   const samples = [0.1, 0.8, 0.6]
   assert.deepEqual(randomFill(days, 50, () => samples[index++]), { '2025-01-01': 7 })
   const before = { '2025-01-02': 0 }
-  const filled = fullFill(days, before)
-  assert.deepEqual(filled, { '2025-01-01': 1 })
-  assert.deepEqual(fullFill(days, { '2025-01-01': 7 }), { '2025-01-01': 7 })
+  const filled = fillAll(days, before)
+  assert.deepEqual(filled, { '2025-01-01': 1, '2025-01-02': 1 })
+  assert.deepEqual(fillAll(days, { '2025-01-01': 7 }), { '2025-01-01': 8, '2025-01-02': 11 })
+  assert.deepEqual(fillAll(days, { '2025-01-02': 9 }), { '2025-01-01': 1 })
   assert.deepEqual(undo(setChanges(newHistory(before), filled)).current, before)
 })
 

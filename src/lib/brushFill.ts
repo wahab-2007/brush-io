@@ -16,13 +16,13 @@ export function randomFill(days: readonly FillDay[], density: number, random = M
   return changes
 }
 
-export function fullFill(days: readonly FillDay[], current: Changes): Changes {
+export function fillAll(days: readonly FillDay[], current: Changes): Changes {
   const changes = { ...current }
   for (const { date, originalCount } of days) {
-    if ((current[date] ?? originalCount) === 0) {
-      if (originalCount === 0) changes[date] = 1
-      else delete changes[date]
-    }
+    const count = current[date] ?? originalCount
+    const next = Math.min(Number.MAX_SAFE_INTEGER, count + 1)
+    if (next === originalCount) delete changes[date]
+    else changes[date] = next
   }
   return changes
 }
