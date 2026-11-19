@@ -4,6 +4,10 @@ export const siteThemes = {
   system: 'System',
   light: 'Light',
   dark: 'Dark',
+  'true-light': 'True Light',
+  'true-dark': 'True Dark',
+  'white-high-contrast': 'White High Contrast',
+  'black-high-contrast': 'Black High Contrast',
   paper: 'Paper',
   orchid: 'Orchid',
   lagoon: 'Lagoon',
@@ -12,9 +16,11 @@ export const siteThemes = {
 } as const
 export type SiteTheme = keyof typeof siteThemes
 
+const darkThemes: readonly SiteTheme[] = ['dark', 'true-dark', 'black-high-contrast', 'lagoon', 'ink', 'disco']
+
 export function schemeFor(theme: SiteTheme, systemDark: boolean): Scheme {
   if (theme === 'system') return systemDark ? 'dark' : 'light'
-  return theme === 'dark' || theme === 'lagoon' || theme === 'ink' || theme === 'disco' ? 'dark' : 'light'
+  return darkThemes.includes(theme) ? 'dark' : 'light'
 }
 
 const classic = {

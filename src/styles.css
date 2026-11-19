@@ -42,6 +42,84 @@
   --shadow: 0 8px 32px #0004;
 }
 
+:root[data-site-theme="true-light"] {
+  --page: #f6f8fa;
+  --surface: #ffffff;
+  --quiet: #f6f8fa;
+  --board: #ffffff;
+  --text: #1f2328;
+  --muted: #59636e;
+  --border: #d1d9e0;
+  --control-border: #d1d9e0;
+  --primary: #1f883d;
+  --primary-hover: #1a7f37;
+  --primary-text: #ffffff;
+  --focus: #0969da;
+  --active: #ddf4ff;
+  --accent-text: #0550ae;
+  --shadow: 0 3px 12px #1f232812;
+}
+
+:root[data-site-theme="true-dark"] {
+  --page: #0d1117;
+  --surface: #151b23;
+  --quiet: #1c2128;
+  --board: #0d1117;
+  --text: #f0f6fc;
+  --muted: #9198a1;
+  --border: #30363d;
+  --control-border: #3d444d;
+  --primary: #f0f6fc;
+  --primary-hover: #dce7f1;
+  --primary-text: #151b23;
+  --focus: #58a6ff;
+  --active: #182b47;
+  --accent-text: #79c0ff;
+  --shadow: 0 8px 32px #01040999;
+}
+
+:root[data-site-theme="white-high-contrast"] {
+  --page: #ffffff;
+  --surface: #ffffff;
+  --quiet: #f2f2f2;
+  --board: #ffffff;
+  --text: #000000;
+  --muted: #333333;
+  --credit: #424242;
+  --border: #1a1a1a;
+  --control-border: #1a1a1a;
+  --cell-border: #767676;
+  --primary: #000000;
+  --primary-hover: #292929;
+  --primary-text: #ffffff;
+  --focus: #004ac2;
+  --active: #dbeaff;
+  --accent-text: #162e6b;
+  --error: #9b001e;
+  --shadow: none;
+}
+
+:root[data-site-theme="black-high-contrast"] {
+  --page: #000000;
+  --surface: #000000;
+  --quiet: #141414;
+  --board: #000000;
+  --text: #ffffff;
+  --muted: #dedede;
+  --credit: #bdbdbd;
+  --border: #c6c6c6;
+  --control-border: #c6c6c6;
+  --cell-border: #888888;
+  --primary: #ffffff;
+  --primary-hover: #d9d9d9;
+  --primary-text: #000000;
+  --focus: #9bd8ff;
+  --active: #243952;
+  --accent-text: #c9e7ff;
+  --error: #ffadb8;
+  --shadow: none;
+}
+
 :root[data-site-theme="paper"] {
   --page: #f0e8da;
   --surface: #fffaf1;
@@ -241,7 +319,7 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
   margin: 0;
   padding: 0;
   background: var(--cell-color);
-  border: 1px solid #65776b27;
+  border: 1px solid var(--cell-border, #65776b27);
   border-radius: 3px;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -251,7 +329,7 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .graph-legends { margin-inline-start: auto; justify-content: flex-end; padding-block: 3px; }
 .legend { display: flex; white-space: nowrap; gap: 4px; align-items: center; font-size: 11px; color: var(--muted); }
 .legend-months { margin-right: 5px; font-weight: 600; }
-.legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid #65776b27; border-radius: 3px; }
+.legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid var(--cell-border, #65776b27); border-radius: 3px; }
 .cell-readout { display: flex; align-items: center; gap: 6px; min-height: 23px; color: var(--muted); font-size: 12px; }
 .cell-readout:empty { min-height: 0; }
 .readout-number { border-radius: 4px; padding: 2px 6px; font-weight: 700; font-variant-numeric: tabular-nums; }
