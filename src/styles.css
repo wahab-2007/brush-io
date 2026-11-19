@@ -83,7 +83,12 @@ h1 { margin: 0; font-size: clamp(20px, 4vw, 27px); letter-spacing: -.035em; line
 .graph-section { padding: 19px 28px 12px; }
 .view-bar, .action-bar, .file-actions, .script-actions, .history-actions, .palette-control { display: flex; align-items: center; gap: 8px; }
 .view-bar, .action-bar { justify-content: space-between; }
-.view-bar { margin-bottom: 17px; }
+.view-bar { margin-bottom: 12px; }
+.brush-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.brush-control { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.brush-control select, .brush-control input { color: var(--text); }
+.brush-control input { width: 84px; }
+.sound-toggle { margin-left: auto; }
 .palette-control { position: relative; color: var(--muted); font-size: 13px; }
 .palette-control select { padding-left: 25px; min-width: 112px; color: var(--text); }
 .palette-dot { position: absolute; left: 57px; width: 9px; height: 9px; border-radius: 3px; pointer-events: none; }

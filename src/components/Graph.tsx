@@ -16,12 +16,13 @@ interface GraphProps {
   levels: number[]
   palette: string[]
   expanded: boolean
+  opensEditor: boolean
   selected?: string
   onSelect: (selection: Selection) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, expanded, selected, onSelect,
+  dates, counts, levels, palette, expanded, opensEditor, selected, onSelect,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [focused, setFocused] = useState<string>()
@@ -60,7 +61,7 @@ export const Graph = memo(function Graph({
             return <button type="button" key={date} className="cell" style={style}
               ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
               tabIndex={tabDate === date ? 0 : -1} aria-label={label}
-              aria-haspopup="dialog" aria-expanded={date === selected}
+              aria-haspopup={opensEditor ? 'dialog' : undefined} aria-expanded={opensEditor ? date === selected : undefined}
               title={label}
               onFocus={() => { setRangeStart(date); setFocused(date) }}
               onBlur={() => setFocused(undefined)}

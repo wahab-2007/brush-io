@@ -3,12 +3,15 @@ import { DayEditor } from './components/DayEditor.tsx'
 import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
+import { playBrushSound } from './lib/brushSound.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
 import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
 import { colorsFor, themes } from './lib/themes.ts'
 import type { Scheme, Theme } from './lib/themes.ts'
+
+type Brush = 'manual' | '1' | '5' | '10' | 'custom'
 
 const systemQuery = '(prefers-color-scheme: dark)'
 const scriptName = 'github_contributions.py'
@@ -40,6 +43,9 @@ export default function App() {
   const [mode, setMode] = useState<Scheme | 'system'>('system')
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [theme, setTheme] = useState<Theme>('green')
+  const [brush, setBrush] = useState<Brush>('manual')
+  const [customBrush, setCustomBrush] = useState('1')
+  const [sound, setSound] = useState(true)
   const [expanded, setExpanded] = useState(false)
   const [selection, setSelection] = useState<Selection>()
   const [notice, setNotice] = useState('')
@@ -47,6 +53,8 @@ export default function App() {
   const upload = useRef<HTMLInputElement>(null)
   const scheme = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode
   const palette = colorsFor(theme, scheme)
+  const increment = Number(brush === 'custom' ? customBrush : brush)
+  const canPaint = Number.isSafeInteger(increment) && increment > 0
   const currentDates = useMemo(() => yearDates(year), [year])
   const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
   const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
@@ -74,6 +82,20 @@ export default function App() {
     if (focus) selection?.anchor.focus()
     setSelection(undefined)
   }, [selection])
+
+  function useBrush(cell: Selection) {
+    if (brush === 'manual') {
+      if (sound) void playBrushSound()
+      setSelection(cell)
+      return
+    }
+    if (!canPaint) return
+    setHistory((state) => {
+      const count = state.current[cell.date] ?? 0
+      return setCount(state, cell.date, Math.min(Number.MAX_SAFE_INTEGER, count + increment))
+    })
+    if (sound) void playBrushSound()
+  }
 
   function changeYear(next: number) {
     setYear(next)
@@ -158,8 +180,32 @@ export default function App() {
             </div>
           </div>
 
+          <div className="brush-bar">
+            <label className="brush-control"><span>Brush</span>
+              <select aria-label="Brush" value={brush} onChange={(event) => {
+                setBrush(event.target.value as Brush)
+                setSelection(undefined)
+              }}>
+                <option value="manual">Edit count</option>
+                <option value="1">+1 per click</option>
+                <option value="5">+5 per click</option>
+                <option value="10">+10 per click</option>
+                <option value="custom">Custom amount</option>
+              </select>
+            </label>
+            {brush === 'custom' && <label className="brush-control">
+              <span>Add per click</span>
+              <input type="number" min="1" step="1" value={customBrush} aria-invalid={!canPaint}
+                onChange={(event) => setCustomBrush(event.target.value)}/>
+            </label>}
+            <button className="sound-toggle" type="button" aria-label="ASMR sound" aria-pressed={sound} onClick={() => {
+              if (!sound) void playBrushSound()
+              setSound(!sound)
+            }}>Sound {sound ? 'on' : 'off'}</button>
+          </div>
+
           <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
-            selected={selection?.date} onSelect={setSelection}/>
+            selected={selection?.date} opensEditor={brush === 'manual'} onSelect={useBrush}/>
         </div>
 
         <div className="action-bar">
