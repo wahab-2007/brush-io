@@ -184,8 +184,8 @@ button.primary { background: var(--primary); border-color: var(--primary); color
 button.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .app { max-width: 1240px; margin: 0 auto; padding: 32px 32px 36px; }
-.appearance { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 13px; }
-.appearance select { color: var(--text); }
+.appearance { color: var(--text); }
+button.history-button { width: 36px; height: 36px; border-radius: 50%; padding: 0; }
 .site-credit { margin-top: 18px; text-align: center; font-size: 12px; }
 .site-credit a { color: var(--credit); text-decoration: none; }
 .site-credit a:hover, .site-credit a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }

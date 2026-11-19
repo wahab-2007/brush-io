@@ -28,11 +28,9 @@ export function Appearance({ theme, onChange }: { theme: SiteTheme; onChange: (t
 
   return (
     <div className="theme-controls">
-      <label className="appearance"><span>Site theme</span>
-        <select aria-label="Site theme" value={theme} onChange={(event) => select(event.target.value as SiteTheme)}>
-          {Object.entries(siteThemes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-        </select>
-      </label>
+      <select className="appearance" aria-label="Site theme" title="Site theme" value={theme} onChange={(event) => select(event.target.value as SiteTheme)}>
+        {Object.entries(siteThemes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+      </select>
       <audio ref={audio} src={track} preload="none" loop
         onPlaying={() => setPlaying(true)} onPause={() => setPlaying(false)} onError={() => setPlaying(false)}/>
       {theme === 'disco' && <button type="button" className="music-toggle"

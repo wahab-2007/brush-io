@@ -233,8 +233,8 @@ export default function App() {
 
         <div className="action-bar">
           <div className="history-actions" aria-label="Canvas history">
-            <button disabled={!history.past.length} onClick={() => { setHistory(undo); setSelection(undefined) }}><Icon name="undo"/>Undo</button>
-            <button disabled={!history.future.length} onClick={() => { setHistory(redo); setSelection(undefined) }}><Icon name="redo"/>Redo</button>
+            <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo); setSelection(undefined) }}><Icon name="undo"/></button>
+            <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo); setSelection(undefined) }}><Icon name="redo"/></button>
             <button disabled={!total} onClick={() => {
               setHistory((state) => setChanges(state, {}))
               setSelection(undefined)
