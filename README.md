@@ -4,6 +4,8 @@ A blank contribution calendar for planning Git commits. Select a year, click a d
 
 Choose a **Brush** preset or a custom amount to add commits per click. **Randomize** replaces the current edits with a new plan. The density slider controls how likely each day is to receive an addition. **Full green** fills empty days and selects the green palette. You can undo either fill as one edit. Use **Sound** to mute the soft clicks.
 
+**Site theme** changes the workspace colors. **Palette** changes the calendar independently and includes Mono and Black & White. Select **Disco** for a light show and an original looping track. **Pause music** controls the track separately from brush sounds.
+
 ## Run locally
 
 Use Node.js 24.10 or newer. Run `npm ci` and `npm run dev`. The app uses no API, account data, or server credentials.

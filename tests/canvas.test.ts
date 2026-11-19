@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { colorsFor, paletteGroups, schemeFor } from '../src/lib/themes.ts'
+import type { Theme } from '../src/lib/themes.ts'
 import { fullFill, randomFill } from '../src/lib/brushFill.ts'
 import { layout, yearDates } from '../src/lib/calendar.ts'
 import { summarize } from '../src/lib/intensity.ts'
@@ -72,4 +74,17 @@ test('random and full fills preserve the baseline and can be undone as a single 
   assert.deepEqual(filled, { '2025-01-01': 1 })
   assert.deepEqual(fullFill(days, { '2025-01-01': 7 }), { '2025-01-01': 7 })
   assert.deepEqual(undo(setChanges(newHistory(before), filled)).current, before)
+})
+
+test('chart palettes stay distinct under independent site themes', () => {
+  const themes = Object.values(paletteGroups).flatMap((group) => Object.keys(group)) as Theme[]
+  assert.equal(new Set(themes).size, 17)
+  for (const theme of themes) {
+    const light = colorsFor(theme, schemeFor('paper', false))
+    const dark = colorsFor(theme, schemeFor('disco', false))
+    assert.equal(new Set(light).size, 5)
+    assert.equal(new Set(dark).size, 5)
+    assert.notDeepEqual(light, dark)
+  }
+  assert.deepEqual(colorsFor('blackWhite', 'light'), ['#ffffff', '#cccccc', '#888888', '#444444', '#000000'])
 })

@@ -11,8 +11,8 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   const server = createServer(async (req, res) => {
     const file = req.url?.slice('/brush-io/'.length) || 'index.html'
     if (req.url?.startsWith('/brush-io/') &&
-        /^(index\.html|favicon\.svg|assets\/[\w.-]+\.(js|css))$/.test(file)) {
-      const types: Record<string, string> = { html: 'text/html', svg: 'image/svg+xml', js: 'text/javascript', css: 'text/css' }
+        /^(index\.html|favicon\.svg|assets\/[\w.-]+\.(js|css|mp3))$/.test(file)) {
+      const types: Record<string, string> = { html: 'text/html', svg: 'image/svg+xml', js: 'text/javascript', css: 'text/css', mp3: 'audio/mpeg' }
       try {
         res.setHeader('Content-Type', types[file.split('.').at(-1)!])
         res.end(await readFile(new URL('../dist/' + file, import.meta.url)))
@@ -125,6 +125,39 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   assert.equal(await page.getByLabel('Palette').inputValue(), 'green')
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await page.getByText('0 planned commits in 2026').waitFor()
+
+
+  const appearance = page.getByLabel('Appearance', { exact: true })
+  const palette = page.getByLabel('Palette', { exact: true })
+  assert.equal(await palette.locator('option').count(), 17)
+  await palette.selectOption('mono')
+  const mono = await page.locator('.palette-preview').innerHTML()
+  await palette.selectOption('blackWhite')
+  assert.notEqual(await page.locator('.palette-preview').innerHTML(), mono)
+  await appearance.selectOption('paper')
+  assert.equal(await page.locator('html').getAttribute('data-site-theme'), 'paper')
+  await appearance.selectOption('lagoon')
+  assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
+  assert.equal(await palette.inputValue(), 'blackWhite')
+
+  await appearance.selectOption('disco')
+  const music = page.getByRole('button', { name: 'Disco music' })
+  await page.waitForFunction(() => (document.querySelector('audio')?.currentTime ?? 0) > 0)
+  assert.equal(await page.locator('html').getAttribute('data-site-theme'), 'disco')
+  assert.equal(await page.evaluate(() => document.querySelector('audio')?.loop), true)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  assert.equal(await page.evaluate(() => getComputedStyle(document.body, '::before').animationName), 'none')
+  await music.click()
+  await page.waitForFunction(() => document.querySelector('audio')?.paused)
+  await music.click()
+  await page.waitForFunction(() => document.querySelector('audio')?.paused === false)
+  await appearance.selectOption('orchid')
+  assert.equal(await music.count(), 0)
+  assert.equal(await page.evaluate(() => {
+    const player = document.querySelector('audio')
+    return player?.paused && player.currentTime === 0
+  }), true)
+  assert.equal(await palette.inputValue(), 'blackWhite')
 
   await page.setViewportSize({ width: 375, height: 750 })
   assert.equal(await page.locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
