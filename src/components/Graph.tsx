@@ -13,13 +13,12 @@ interface GraphProps {
   counts: number[]
   levels: number[]
   palette: string[]
-  oddPalette?: string[]
   expanded: boolean
   onPaint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, oddPalette, expanded, onPaint,
+  dates, counts, levels, palette, expanded, onPaint,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [hovered, setHovered] = useState<string>()
@@ -33,15 +32,10 @@ export const Graph = memo(function Graph({
     '--digits': digits,
   } as CSSProperties
 
-  function cellColor(date: string, index: number) {
-    const colors = oddPalette && Number(date.slice(5, 7)) % 2 === 1 ? oddPalette : palette
-    return colors[levels[index] ?? 0]
-  }
-
   const activeDate = hovered ?? focused
   const activeIndex = activeDate ? dates.indexOf(activeDate) : -1
   const activeCount = counts[activeIndex] ?? 0
-  const activeColor = activeDate ? cellColor(activeDate, activeIndex) : palette[0]
+  const activeColor = palette[levels[activeIndex] ?? 0]
 
   const cellsByDate = useMemo(() => new Map(dates.map((date, index) => [date, index])), [dates])
 
@@ -74,7 +68,7 @@ export const Graph = memo(function Graph({
             style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
           {cells.map(({ date, column, row }, index) => {
             const count = counts[index] ?? 0
-            const color = cellColor(date, index)
+            const color = palette[levels[index] ?? 0]
             const style = {
               gridColumn: column + 2, gridRow: row + 2, '--cell-color': color, color: onColor(color),
             } as CSSProperties
@@ -119,19 +113,12 @@ export const Graph = memo(function Graph({
             <span>{activeCount === 1 ? 'commit' : 'commits'}</span>
           </>}
         </div>
-        <div className="graph-legends">
-          <Legend colors={palette} months={oddPalette ? 'Even months' : undefined}/>
-          {oddPalette && <Legend colors={oddPalette} months="Odd months"/>}
+        <div className="legend" aria-label="Contribution intensity from less to more">
+          <span>Less</span>
+          {palette.map((color) => <span key={color} className="legend-cell" style={{ background: color }} aria-hidden="true"/>)}
+          <span>More</span>
         </div>
       </div>
     </>
   )
 })
-
-function Legend({ colors, months }: { colors: string[]; months?: string }) {
-  return <div className="legend" aria-label={months ? 'Contribution intensity for ' + months.toLowerCase() : 'Contribution intensity from less to more'}>
-    <span>Less</span>
-    {colors.map((color) => <span key={color} className="legend-cell" style={{ background: color }} aria-hidden="true"/>)}
-    <span>More</span>
-  </div>
-}

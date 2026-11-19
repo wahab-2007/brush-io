@@ -40,14 +40,12 @@ export default function App() {
   const [initial] = useState(recover)
   const [year, setYear] = useState(initial?.year ?? currentYear)
   const [history, setHistory] = useState(() => newHistory(initial?.changes))
-  const [{ mode, theme, oddTheme }, setAppearance] = useAppearancePreferences()
+  const [{ mode, theme }, setAppearance] = useAppearancePreferences()
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [expanded, setExpanded] = useState(false)
   const [notice, setNotice] = useState('')
   const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
-  const oddPalette = useMemo(() => oddTheme === 'same' || oddTheme === theme ? undefined : colorsFor(oddTheme, scheme),
-    [oddTheme, theme, scheme])
   const currentDates = useMemo(() => yearDates(year), [year])
   const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
   const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
@@ -98,8 +96,7 @@ export default function App() {
         <div className="graph-section">
           <div className="view-bar">
             <div className="palette-controls">
-              <PaletteSelect label="Palette" value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>
-              <PaletteSelect label="Odd months" value={oddTheme} scheme={scheme} colors={oddPalette ?? palette} sharedColors={palette} onChange={(oddTheme) => setAppearance((current) => ({ ...current, oddTheme }))}/>
+              <PaletteSelect value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>
             </div>
             <div className="view-actions">
               <div className="segmented" role="group" aria-label="Calendar size">
@@ -113,7 +110,7 @@ export default function App() {
           </div>
 
           <div className="graph-board">
-            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} oddPalette={oddPalette} expanded={expanded}
+            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
               onPaint={paintCell}/>
           </div>
         </div>

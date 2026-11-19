@@ -5,11 +5,10 @@ import type { SiteTheme, Theme } from './themes.ts'
 interface AppearancePreferences {
   mode: SiteTheme
   theme: Theme
-  oddTheme: Theme | 'same'
 }
 
 const key = 'brush-io:appearance:v1'
-const defaults: AppearancePreferences = { mode: 'system', theme: 'green', oddTheme: 'same' }
+const defaults: AppearancePreferences = { mode: 'system', theme: 'green' }
 const paletteNames = new Set(Object.values(paletteGroups).flatMap((group) => Object.keys(group)))
 
 function readAppearance(): AppearancePreferences {
@@ -19,7 +18,6 @@ function readAppearance(): AppearancePreferences {
     return {
       mode: value.mode && Object.hasOwn(siteThemes, value.mode) ? value.mode : defaults.mode,
       theme: value.theme && paletteNames.has(value.theme) ? value.theme : defaults.theme,
-      oddTheme: value.oddTheme && paletteNames.has(value.oddTheme) ? value.oddTheme : defaults.oddTheme,
     }
   } catch {
     return defaults
