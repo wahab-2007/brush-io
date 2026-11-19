@@ -67,9 +67,13 @@ export function deserialize(raw: string, today = dateKey(new Date())): Session {
 const sessionKey = (year: number) => 'brush-io:v1:' + year
 const activeKey = 'brush-io:v1:active-year'
 
-export function saveSession(storage: Pick<Storage, 'setItem'>, session: Session) {
+export function saveSession(storage: Pick<Storage, 'setItem'>, session: Session, markActive = true) {
   storage.setItem(sessionKey(session.year), serialize(session))
-  storage.setItem(activeKey, String(session.year))
+  if (markActive) rememberYear(storage, session.year)
+}
+
+export function rememberYear(storage: Pick<Storage, 'setItem'>, year: number) {
+  storage.setItem(activeKey, String(year))
 }
 
 export function readSession(storage: Pick<Storage, 'getItem'>, year?: number, today?: string) {

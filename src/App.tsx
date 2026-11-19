@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Appearance } from './components/Appearance.tsx'
 import { Graph } from './components/Graph.tsx'
-import { Icon } from './components/Icon.tsx'
+import { CalendarToolbar } from './components/CalendarToolbar.tsx'
+import { CalendarViewport } from './components/CalendarViewport.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
 import { useInterfaceSounds } from './lib/useInterfaceSounds.ts'
 import type { PaintDelta } from './lib/useCellPaint.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
-import { newHistory, readSession, redo, saveSession, setChanges, setCount, undo } from './lib/session.ts'
+import { newHistory, readSession, redo, rememberYear, saveSession, setChanges, setCount, undo } from './lib/session.ts'
+import type { History } from './lib/session.ts'
+import type { Changes } from './lib/intensity.ts'
 import { colorsFor, schemeFor } from './lib/themes.ts'
 import { useAppearancePreferences } from './lib/useAppearancePreferences.ts'
 
@@ -35,19 +38,32 @@ function download(filename: string, content: string, type: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
+const currentYear = new Date().getUTCFullYear()
+const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
+
+const YearGraph = memo(function YearGraph({ year, changes, palette, paint }: {
+  year: number
+  changes: Changes
+  palette: string[]
+  paint: (date: string, delta: PaintDelta, stroke: symbol) => void
+}) {
+  const dates = useMemo(() => yearDates(year), [year])
+  const { counts, levels } = useMemo(() => summarize(dates, changes), [dates, changes])
+  return <Graph dates={dates} counts={counts} levels={levels} palette={palette} onPaint={paint}/>
+})
+
 export default function App() {
-  const currentYear = new Date().getUTCFullYear()
-  const [initial] = useState(recover)
-  const [year, setYear] = useState(initial?.year ?? currentYear)
-  const [history, setHistory] = useState(() => newHistory(initial?.changes))
+  const [position] = useState(() => ({ year: recover()?.year ?? currentYear }))
+  const [year, setYear] = useState(position.year)
+  const [histories, setHistories] = useState<Record<number, History>>(() =>
+    Object.fromEntries(years.map((item) => [item, newHistory(recover(item)?.changes)])))
+  const persisted = useRef(histories)
+  const history = histories[year]
   const [{ mode, theme }, setAppearance] = useAppearancePreferences()
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [notice, setNotice] = useState('')
   const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
-  const currentDates = useMemo(() => yearDates(year), [year])
-  const { counts, levels, total } = useMemo(() => summarize(currentDates, history.current), [currentDates, history.current])
-  const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
   useInterfaceSounds()
 
@@ -65,60 +81,56 @@ export default function App() {
 
   useEffect(() => {
     try {
-      saveSession(localStorage, { year, changes: history.current })
+      for (const item of years) {
+        if (histories[item].current !== persisted.current[item].current) {
+          saveSession(localStorage, { year: item, changes: histories[item].current }, false)
+        }
+      }
+      rememberYear(localStorage, year)
+      persisted.current = histories
+      setNotice('')
     } catch {
       setNotice('Local storage is unavailable. Your canvas may not survive a reload.')
     }
-  }, [year, history.current])
+  }, [year, histories])
 
-  function paintCell(date: string, delta: PaintDelta, stroke: symbol) {
-    setHistory((state) => {
+  const edit = useCallback((target: number, update: (history: History) => History) => {
+    setHistories((current) => {
+      const previous = current[target]
+      const next = update(previous)
+      return next === previous ? current : { ...current, [target]: next }
+    })
+  }, [])
+
+  const paintCell = useCallback((date: string, delta: PaintDelta, stroke: symbol) => {
+    const target = Number(date.slice(0, 4))
+    setYear(target)
+    edit(target, (state) => {
       const count = state.current[date] ?? 0
       return setCount(state, date, Math.max(0, Math.min(Number.MAX_SAFE_INTEGER, count + delta)), stroke)
     })
-  }
+  }, [edit])
 
-  function changeYear(next: number) {
-    setYear(next)
-    setHistory(newHistory(recover(next)?.changes))
-    setNotice('')
-  }
+  const additions = Object.keys(history.current).length > 0
 
   function exportScript() {
-    const plan = createPlan(currentDates, history.current)
+    const plan = createPlan(yearDates(year), history.current)
     if (plan.length) download(scriptName, generatePython(plan), 'text/x-python;charset=utf-8')
   }
 
   return (
     <main className="app">
+      <CalendarToolbar year={year}
+        canUndo={!!history.past.length} canRedo={!!history.future.length} canClear={additions} canDownload={additions}
+        onUndo={() => edit(year, undo)} onRedo={() => edit(year, redo)}
+        onClear={() => edit(year, (state) => setChanges(state, {}))} onDownload={exportScript}
+        palette={<PaletteSelect value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>}
+        appearance={<Appearance theme={mode} onChange={(mode) => setAppearance((current) => ({ ...current, mode }))}/>}/>
+
       <section className="workspace" aria-label="Contribution canvas">
         <div className="graph-section">
-          <div className="graph-board">
-            <div className="graph-controls">
-              <PaletteSelect value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>
-              <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
-                {years.map((option) => <option key={option}>{option}</option>)}
-              </select>
-            </div>
-            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette}
-              onPaint={paintCell}/>
-          </div>
-        </div>
-
-        <div className="action-bar">
-          <div className="history-actions" aria-label="Canvas history">
-            <button className="history-button" aria-label="Undo" title="Undo" disabled={!history.past.length} onClick={() => { setHistory(undo) }}><Icon name="undo"/></button>
-            <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo) }}><Icon name="redo"/></button>
-            <button className="history-button" aria-label="Clear canvas" title="Clear canvas" disabled={!total} onClick={() => {
-              setHistory((state) => setChanges(state, {}))
-            }}>
-              <Icon name="close"/>
-            </button>
-          </div>
-          <div className="script-actions">
-            <button className="primary" disabled={!total} onClick={exportScript}><Icon name="code"/>Script</button>
-            <Appearance theme={mode} onChange={(mode) => setAppearance((current) => ({ ...current, mode }))}/>
-          </div>
+          <CalendarViewport years={years} activeYear={year} position={position} onActivate={setYear}
+            renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} paint={paintCell}/>}/>
         </div>
         {notice && <div className="notice" role="alert">{notice}</div>}
       </section>
@@ -126,7 +138,6 @@ export default function App() {
       <footer className="site-credit">
         <a href="https://github.com/wahab-2007">Made by @wahab-2007</a>
       </footer>
-
     </main>
   )
 }

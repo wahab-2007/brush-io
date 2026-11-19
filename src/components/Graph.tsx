@@ -109,11 +109,6 @@ export const Graph = memo(function Graph({
             <span>{activeCount === 1 ? 'commit' : 'commits'}</span>
           </>}
         </div>
-        <div className="legend" aria-label="Contribution intensity from less to more">
-          <span>Less</span>
-          {palette.map((color) => <span key={color} className="legend-cell" style={{ background: color }} aria-hidden="true"/>)}
-          <span>More</span>
-        </div>
       </div>
     </>
   )
