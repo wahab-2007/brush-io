@@ -5,6 +5,7 @@ import { Graph } from './components/Graph.tsx'
 import type { Selection } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
+import { Presets } from './components/Presets.tsx'
 import { ToolbarPopover } from './components/ToolbarPopover.tsx'
 import { fillAll, randomFill } from './lib/brushFill.ts'
 import { playInterfaceSound } from './lib/brushSound.ts'
@@ -190,6 +191,19 @@ export default function App() {
 
         <div className="action-bar">
           <div className="history-actions" aria-label="Canvas history">
+            <Presets canSave capture={() => ({
+              canvas: serialize({ year, changes: history.current }), theme, oddTheme, expanded,
+            })} restore={(preset) => {
+              const session = deserialize(preset.canvas)
+              setYear(session.year)
+              setHistory(newHistory(session.changes))
+              setSelection(undefined)
+              setCopyFallback(undefined)
+              setNotice('')
+              setTheme(preset.theme)
+              setOddTheme(preset.oddTheme)
+              setExpanded(preset.expanded)
+            }}/>
             <ToolbarPopover label="Tools">
               <label className="brush-control"><span>Brush</span>
                 <select aria-label="Brush" value={brush} onChange={(event) => {

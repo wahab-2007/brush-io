@@ -290,6 +290,9 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 @supports (position-area: top span-right) {
   .toolbar-popover { margin: 6px; position-area: top span-right; position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline; }
 }
+.preset-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.preset-row input, .preset-row select { flex: 1; min-width: 0; }
+.preset-status { width: 100%; margin: 0; font-size: 13px; color: var(--muted); }
 .brush-control { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
 .brush-control select, .brush-control input { color: var(--text); }
 .brush-control input[type="number"] { width: 84px; }
