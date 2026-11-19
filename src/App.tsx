@@ -9,8 +9,8 @@ import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
 import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
-import { colorsFor, themes } from './lib/themes.ts'
-import type { Scheme, Theme } from './lib/themes.ts'
+import { colorsFor, paletteGroups, schemeFor, siteThemes } from './lib/themes.ts'
+import type { SiteTheme, Theme } from './lib/themes.ts'
 
 type Brush = 'manual' | '1' | '5' | '10' | 'custom'
 
@@ -41,7 +41,7 @@ export default function App() {
   const [initial] = useState(recover)
   const [year, setYear] = useState(initial?.year ?? currentYear)
   const [history, setHistory] = useState(() => newHistory(initial?.changes))
-  const [mode, setMode] = useState<Scheme | 'system'>('system')
+  const [mode, setMode] = useState<SiteTheme>('system')
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [theme, setTheme] = useState<Theme>('green')
   const [brush, setBrush] = useState<Brush>('manual')
@@ -53,7 +53,7 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [copyFallback, setCopyFallback] = useState<string>()
   const upload = useRef<HTMLInputElement>(null)
-  const scheme = mode === 'system' ? (systemDark ? 'dark' : 'light') : mode
+  const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
   const increment = Number(brush === 'custom' ? customBrush : brush)
   const canPaint = Number.isSafeInteger(increment) && increment > 0
@@ -70,7 +70,8 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.scheme = scheme
-  }, [scheme])
+    document.documentElement.dataset.siteTheme = mode
+  }, [scheme, mode])
 
   useEffect(() => {
     try {
@@ -160,9 +161,9 @@ export default function App() {
     <main className="app">
       <header className="masthead">
         <div className="wordmark"><span className="brand-icon"><Icon name="calendar"/></span>Brush IO</div>
-        <label className="appearance"><span>Appearance</span>
+        <label className="appearance"><span>Site theme</span>
           <select aria-label="Appearance" value={mode} onChange={(event) => setMode(event.target.value as typeof mode)}>
-            <option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option>
+            {Object.entries(siteThemes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
           </select>
         </label>
       </header>
@@ -186,18 +187,9 @@ export default function App() {
               <label className="palette-control">
               <span>Palette</span>
               <select aria-label="Palette" value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
-                <optgroup label="Classic">
-                  <option value="green">Green</option>
-                  <option value="halloween">Halloween</option>
-                  <option value="winter">Winter</option>
-                </optgroup>
-                <optgroup label="Color">
-                  {Object.entries(themes).slice(3, -2).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-                </optgroup>
-                <optgroup label="Grayscale">
-                  <option value="mono">Mono</option>
-                  <option value="blackWhite">Black &amp; White</option>
-                </optgroup>
+                {Object.entries(paletteGroups).map(([group, options]) => <optgroup label={group} key={group}>
+                  {Object.entries(options).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
+                </optgroup>)}
               </select>
               <span className="palette-preview" aria-hidden="true">
                 {palette.map((color) => <span style={{ backgroundColor: color }} key={color}/>)}
@@ -241,8 +233,10 @@ export default function App() {
             }}>Sound {sound ? 'on' : 'off'}</button>
           </div>
 
-          <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
-            selected={selection?.date} opensEditor={brush === 'manual'} onSelect={useBrush}/>
+          <div className="graph-board">
+            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
+              selected={selection?.date} opensEditor={brush === 'manual'} onSelect={useBrush}/>
+          </div>
         </div>
 
         <div className="action-bar">

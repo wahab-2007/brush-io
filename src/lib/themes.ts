@@ -1,9 +1,27 @@
 export type Scheme = 'light' | 'dark'
 
-export const themes = {
+export const siteThemes = {
+  system: 'System',
+  light: 'Light',
+  dark: 'Dark',
+  paper: 'Paper',
+  orchid: 'Orchid',
+  lagoon: 'Lagoon',
+  ink: 'Ink',
+} as const
+export type SiteTheme = keyof typeof siteThemes
+
+export function schemeFor(theme: SiteTheme, systemDark: boolean): Scheme {
+  if (theme === 'system') return systemDark ? 'dark' : 'light'
+  return theme === 'dark' || theme === 'lagoon' || theme === 'ink' ? 'dark' : 'light'
+}
+
+const classic = {
   green: 'Green',
   halloween: 'Halloween',
   winter: 'Winter',
+} as const
+const color = {
   ocean: 'Ocean',
   lagoon: 'Lagoon',
   plum: 'Plum',
@@ -16,11 +34,14 @@ export const themes = {
   forest: 'Forest',
   terracotta: 'Terracotta',
   indigo: 'Indigo',
+} as const
+const grayscale = {
   mono: 'Mono',
   blackWhite: 'Black & White',
 } as const
 
-export type Theme = keyof typeof themes
+export const paletteGroups = { Classic: classic, Color: color, Grayscale: grayscale }
+export type Theme = keyof typeof classic | keyof typeof color | keyof typeof grayscale
 
 type Ramp = [string, string, string, string]
 const ramps: Record<Theme, [light: Ramp, dark: Ramp]> = {
