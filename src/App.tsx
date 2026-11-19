@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Appearance } from './components/Appearance.tsx'
 import { Graph } from './components/Graph.tsx'
 import { Icon } from './components/Icon.tsx'
@@ -8,7 +8,7 @@ import type { PaintDelta } from './lib/useCellPaint.ts'
 import { FIRST_YEAR, yearDates } from './lib/calendar.ts'
 import { summarize } from './lib/intensity.ts'
 import { createPlan, generatePython } from './lib/pythonGenerator.ts'
-import { deserialize, newHistory, readSession, redo, saveSession, serialize, setChanges, setCount, undo } from './lib/session.ts'
+import { newHistory, readSession, redo, saveSession, setChanges, setCount, undo } from './lib/session.ts'
 import { colorsFor, schemeFor } from './lib/themes.ts'
 import { useAppearancePreferences } from './lib/useAppearancePreferences.ts'
 
@@ -44,8 +44,6 @@ export default function App() {
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
   const [expanded, setExpanded] = useState(false)
   const [notice, setNotice] = useState('')
-  const [copyFallback, setCopyFallback] = useState<string>()
-  const upload = useRef<HTMLInputElement>(null)
   const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
   const oddPalette = useMemo(() => oddTheme === 'same' || oddTheme === theme ? undefined : colorsFor(oddTheme, scheme),
@@ -72,7 +70,7 @@ export default function App() {
     try {
       saveSession(localStorage, { year, changes: history.current })
     } catch {
-      setNotice('Local storage is unavailable. Export your canvas to keep it.')
+      setNotice('Local storage is unavailable. Your canvas may not survive a reload.')
     }
   }, [year, history.current])
 
@@ -86,43 +84,12 @@ export default function App() {
   function changeYear(next: number) {
     setYear(next)
     setHistory(newHistory(recover(next)?.changes))
-    setCopyFallback(undefined)
     setNotice('')
   }
 
-  async function importFile(file?: File) {
-    if (!file) return
-    try {
-      if (file.size > 64_000) throw new Error('The canvas file is too large.')
-      const imported = deserialize(await file.text())
-      setYear(imported.year)
-      setHistory(newHistory(imported.changes))
-      setCopyFallback(undefined)
-      setNotice('Canvas imported.')
-    } catch (error) {
-      setNotice(error instanceof SyntaxError ? 'Choose a valid Brush IO canvas file.'
-        : error instanceof Error ? error.message : 'Could not import the canvas.')
-    }
-  }
-
-  async function exportScript(copy: boolean) {
+  function exportScript() {
     const plan = createPlan(currentDates, history.current)
-    if (!plan.length) return
-    const script = generatePython(plan)
-    const formatted = total.toLocaleString('en-US') + (total === 1n ? ' commit' : ' commits')
-    if (!copy) {
-      download(scriptName, script, 'text/x-python;charset=utf-8')
-      setNotice('Downloaded the Python script for ' + formatted + '.')
-      return
-    }
-    try {
-      await navigator.clipboard.writeText(script)
-      setCopyFallback(undefined)
-      setNotice('Copied the Python script for ' + formatted + '.')
-    } catch {
-      setCopyFallback(script)
-      setNotice('Select and copy the script below.')
-    }
+    if (plan.length) download(scriptName, generatePython(plan), 'text/x-python;charset=utf-8')
   }
 
   return (
@@ -157,32 +124,16 @@ export default function App() {
             <button className="history-button" aria-label="Redo" title="Redo" disabled={!history.future.length} onClick={() => { setHistory(redo) }}><Icon name="redo"/></button>
             <button className="history-button" aria-label="Clear canvas" title="Clear canvas" disabled={!total} onClick={() => {
               setHistory((state) => setChanges(state, {}))
-              setCopyFallback(undefined)
             }}>
               <Icon name="close"/>
             </button>
           </div>
-          <div className="file-actions">
-            <input type="file" accept=".json,application/json" hidden ref={upload} onChange={(event) => {
-              void importFile(event.target.files?.[0])
-              event.target.value = ''
-            }}/>
-            <button onClick={() => upload.current?.click()}><Icon name="upload"/>Import canvas</button>
-            <button onClick={() => download('brush-io-' + year + '.json', serialize({ year, changes: history.current }), 'application/json')}>
-              <Icon name="download"/>Export canvas
-            </button>
-          </div>
           <div className="script-actions">
-            <button disabled={!total} onClick={() => void exportScript(true)}><Icon name="copy"/>Copy Python</button>
-            <button className="primary" disabled={!total} onClick={() => void exportScript(false)}><Icon name="code"/>Download Python</button>
+            <button className="primary" disabled={!total} onClick={exportScript}><Icon name="code"/>Script</button>
             <Appearance theme={mode} onChange={(mode) => setAppearance((current) => ({ ...current, mode }))}/>
           </div>
         </div>
-        <div className={notice ? 'notice' : 'notice visually-hidden'} role="status">{notice}</div>
-        {copyFallback !== undefined && <div className="copy-panel">
-          <div><label htmlFor="copy-script">Python script</label><button onClick={() => setCopyFallback(undefined)}>Close</button></div>
-          <textarea id="copy-script" value={copyFallback} readOnly autoFocus onFocus={(event) => event.currentTarget.select()}/>
-        </div>}
+        {notice && <div className="notice" role="alert">{notice}</div>}
       </section>
 
       <footer className="site-credit">
