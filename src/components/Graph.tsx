@@ -13,12 +13,11 @@ interface GraphProps {
   counts: number[]
   levels: number[]
   palette: string[]
-  expanded: boolean
   onPaint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, expanded, onPaint,
+  dates, counts, levels, palette, onPaint,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [hovered, setHovered] = useState<string>()
@@ -26,10 +25,8 @@ export const Graph = memo(function Graph({
   const [rangeStart, setRangeStart] = useState(dates[0])
   const buttons = useRef(new Map<string, HTMLButtonElement>())
   const tabDate = dates.includes(rangeStart) ? rangeStart : dates[0]
-  const digits = counts.reduce((max, count) => Math.max(max, String(count).length), 1)
   const plotStyle = {
     '--weeks': columns,
-    '--digits': digits,
   } as CSSProperties
 
   const activeDate = hovered ?? focused
@@ -61,7 +58,7 @@ export const Graph = memo(function Graph({
   return (
     <>
       <div className="graph-scroll" aria-label="Contribution calendar by date">
-        <div className={expanded ? 'plot expanded' : 'plot'} style={plotStyle}>
+        <div className="plot" style={plotStyle}>
           {months.map(({ label, column }) => <span className="month" key={label}
             style={{ gridColumn: column + 2, gridRow: 1 }}>{label}</span>)}
           {weekdays.map((label, index) => <span className="weekday" key={label}
@@ -98,7 +95,6 @@ export const Graph = memo(function Graph({
                   applyPaint(date, event.key === '-' ? -1 : 1, Symbol())
                 } else navigate(event, index)
               }}>
-              {expanded && count > 0 ? count : null}
             </button>
           })}
         </div>

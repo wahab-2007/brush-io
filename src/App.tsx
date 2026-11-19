@@ -42,7 +42,6 @@ export default function App() {
   const [history, setHistory] = useState(() => newHistory(initial?.changes))
   const [{ mode, theme }, setAppearance] = useAppearancePreferences()
   const [systemDark, setSystemDark] = useState(() => matchMedia(systemQuery).matches)
-  const [expanded, setExpanded] = useState(false)
   const [notice, setNotice] = useState('')
   const scheme = schemeFor(mode, systemDark)
   const palette = useMemo(() => colorsFor(theme, scheme), [theme, scheme])
@@ -94,23 +93,14 @@ export default function App() {
     <main className="app">
       <section className="workspace" aria-label="Contribution canvas">
         <div className="graph-section">
-          <div className="view-bar">
-            <div className="palette-controls">
+          <div className="graph-board">
+            <div className="graph-controls">
               <PaletteSelect value={theme} scheme={scheme} colors={palette} onChange={(theme) => setAppearance((current) => ({ ...current, theme }))}/>
-            </div>
-            <div className="view-actions">
-              <div className="segmented" role="group" aria-label="Calendar size">
-                <button aria-pressed={!expanded} onClick={() => { setExpanded(false) }}>Normal</button>
-                <button aria-pressed={expanded} onClick={() => { setExpanded(true) }}>Expanded</button>
-              </div>
               <select aria-label="Year" value={year} onChange={(event) => changeYear(Number(event.target.value))}>
                 {years.map((option) => <option key={option}>{option}</option>)}
               </select>
             </div>
-          </div>
-
-          <div className="graph-board">
-            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette} expanded={expanded}
+            <Graph dates={currentDates} counts={counts} levels={levels} palette={palette}
               onPaint={paintCell}/>
           </div>
         </div>

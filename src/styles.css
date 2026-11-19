@@ -269,12 +269,8 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .site-credit a:hover, .site-credit a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
 .workspace { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: clip; box-shadow: var(--shadow); }
 .graph-section { padding: 18px 28px 18px; }
-.view-bar, .action-bar, .script-actions, .history-actions, .palette-control { display: flex; align-items: center; gap: 8px; }
-.palette-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
-.view-bar, .action-bar { justify-content: space-between; }
-.view-bar { flex-wrap: wrap; gap: 10px 16px; margin-bottom: 10px; }
-.view-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.palette-control { position: relative; color: var(--muted); font-size: 13px; }
+.action-bar, .script-actions, .history-actions { display: flex; align-items: center; gap: 8px; }
+.action-bar { justify-content: space-between; }
 button.palette-preview { padding: 6px; color: var(--text); }
 .palette-cubes { display: inline-flex; align-items: center; gap: 3px; }
 .palette-cubes span { flex: none; width: 19px; height: 19px; border-radius: 4px; box-shadow: inset 0 0 0 1px var(--cell-border, #65776b27); }
@@ -298,17 +294,15 @@ button.palette-preview { padding: 6px; color: var(--text); }
 @supports (position-area: bottom span-right) {
   .palette-picker { margin: 6px; position-area: bottom span-right; position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline; }
 }
-.segmented { display: inline-flex; padding: 3px; border: 1px solid var(--border); border-radius: 8px; background: var(--quiet); }
-.segmented button { min-height: 27px; border: 0; padding: 0 9px; color: var(--muted); background: transparent; }
-.segmented button[aria-pressed="true"], .segmented button[aria-pressed="true"]:hover { background: var(--surface); color: var(--text); box-shadow: 0 0 0 1px var(--border); }
 
-.graph-board { max-width: 1118px; margin-inline: auto; background: var(--board); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px 5px; }
+.graph-board { max-width: 1198px; margin-inline: auto; background: var(--board); border: 1px solid var(--border); border-radius: 13px; padding: 12px 14px 5px; }
+.graph-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 2px 4px 9px; }
 .graph-scroll { overflow-x: auto; padding: 4px 4px 8px; scrollbar-color: var(--control-border) transparent; }
 button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .plot {
   user-select: none;
-  --cell: 15px;
-  --gap: 4px;
+  --cell: 18px;
+  --gap: 3px;
   display: grid;
   width: max-content;
   margin-inline: auto;
@@ -317,11 +311,7 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
   grid-template-rows: 22px repeat(7, var(--cell));
   align-items: center;
 }
-.plot.expanded {
-  --cell: max(36px, calc(var(--digits) * .68em + 14px));
-  font-size: 12px;
-}
-.month, .weekday { color: var(--muted); font-size: 11px; user-select: none; }
+.month, .weekday { color: var(--muted); font-size: 12px; user-select: none; }
 .cell, .cell:hover:not(:disabled) {
   min-height: 0;
   height: var(--cell);
