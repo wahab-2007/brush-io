@@ -27,9 +27,9 @@ export function Appearance({ theme, onChange }: { theme: SiteTheme; onChange: (t
   }
 
   return (
-    <div className="head-controls">
+    <div className="theme-controls">
       <label className="appearance"><span>Site theme</span>
-        <select aria-label="Appearance" value={theme} onChange={(event) => select(event.target.value as SiteTheme)}>
+        <select aria-label="Site theme" value={theme} onChange={(event) => select(event.target.value as SiteTheme)}>
           {Object.entries(siteThemes).map(([value, label]) => <option value={value} key={value}>{label}</option>)}
         </select>
       </label>

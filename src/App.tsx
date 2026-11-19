@@ -160,11 +160,6 @@ export default function App() {
 
   return (
     <main className="app">
-      <header className="masthead">
-        <div className="wordmark"><span className="brand-icon"><Icon name="calendar"/></span>Brush IO</div>
-        <Appearance theme={mode} onChange={setMode}/>
-      </header>
-
       <section className="workspace" aria-labelledby="calendar-heading">
         <div className="workspace-header">
           <div>
@@ -181,7 +176,7 @@ export default function App() {
 
         <div className="graph-section">
           <div className="view-bar">
-              <label className="palette-control">
+            <label className="palette-control">
               <span>Palette</span>
               <select aria-label="Palette" value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
                 {Object.entries(paletteGroups).map(([group, options]) => <optgroup label={group} key={group}>
@@ -240,8 +235,13 @@ export default function App() {
           <div className="history-actions" aria-label="Canvas history">
             <button disabled={!history.past.length} onClick={() => { setHistory(undo); setSelection(undefined) }}><Icon name="undo"/>Undo</button>
             <button disabled={!history.future.length} onClick={() => { setHistory(redo); setSelection(undefined) }}><Icon name="redo"/>Redo</button>
-            <button disabled={!total} onClick={() => { setHistory((state) => setChanges(state, {})); setSelection(undefined) }}>
-              <Icon name="reset"/>Reset
+            <button disabled={!total} onClick={() => {
+              setHistory((state) => setChanges(state, {}))
+              setSelection(undefined)
+              setCopyFallback(undefined)
+              setNotice('Canvas cleared.')
+            }}>
+              <Icon name="reset"/>Clear canvas
             </button>
           </div>
           <div className="file-actions">
@@ -257,6 +257,7 @@ export default function App() {
           <div className="script-actions">
             <button disabled={!total} onClick={() => void exportScript(true)}><Icon name="copy"/>Copy Python</button>
             <button className="primary" disabled={!total} onClick={() => void exportScript(false)}><Icon name="code"/>Download Python</button>
+            <Appearance theme={mode} onChange={setMode}/>
           </div>
         </div>
         <div className={notice ? 'notice' : 'notice visually-hidden'} role="status">{notice}</div>
@@ -265,6 +266,10 @@ export default function App() {
           <textarea id="copy-script" value={copyFallback} readOnly autoFocus onFocus={(event) => event.currentTarget.select()}/>
         </div>}
       </section>
+
+      <footer className="site-credit">
+        <a href="https://github.com/wahab-2007">Made by @wahab-2007</a>
+      </footer>
 
       {selection && <DayEditor key={selection.date} selection={selection}
         count={history.current[selection.date] ?? 0} onUpdate={(count) => setHistory((state) => setCount(state, selection.date, count))}

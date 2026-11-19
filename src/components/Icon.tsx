@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 
 const paths: Record<string, ReactNode> = {
-  calendar: <><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h1m3 0h1m3 0h1m-9 3h1m3 0h1"/></>,
   undo: <><path d="M9 14l-5-5 5-5M4 9h10a5 5 0 1 1 0 10h-3"/></>,
   redo: <path d="m15 14 5-5-5-5m5 5H10a5 5 0 1 0 0 10h3"/>,
   reset: <><path d="M4 11a8 8 0 1 1 2 7m-2-12v5h5"/></>,

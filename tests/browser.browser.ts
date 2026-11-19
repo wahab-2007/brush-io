@@ -43,6 +43,16 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByText('0 planned commits in 2026').waitFor()
   assert.equal(await downloadButton.isDisabled(), true)
   assert.equal(await page.getByLabel('GitHub username').count(), 0)
+  assert.equal(await page.getByText('Brush IO', { exact: true }).count(), 0)
+  assert.equal(await page.locator('.script-actions').getByLabel('Site theme').count(), 1)
+  assert.equal(await page.getByRole('link', { name: 'Made by @wahab-2007' }).getAttribute('href'), 'https://github.com/wahab-2007')
+  assert.equal(await page.getByRole('button', { name: 'Clear canvas' }).isDisabled(), true)
+  const countSquares = () => page.locator('.cell, .palette-preview span, .legend-cell').evaluateAll((elements) =>
+    elements.every((element) => {
+      const { width, height } = element.getBoundingClientRect()
+      return width > 0 && width === height
+    }))
+  assert.equal(await countSquares(), true)
 
   await page.getByRole('button', { name: '0 planned commits on November 19, 2026' }).click()
   const dialog = page.getByRole('dialog', { name: 'November 19, 2026' })
@@ -52,15 +62,21 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByRole('button', { name: 'Expanded', exact: true }).click()
   const selected = page.getByRole('button', { name: '61 planned commits on November 19, 2026' })
   assert.equal(await selected.textContent(), '61')
+  assert.equal(await countSquares(), true)
   const green = await selected.evaluate((node) => getComputedStyle(node).backgroundColor)
   await page.getByLabel('Palette').selectOption('halloween')
   assert.notEqual(await selected.evaluate((node) => getComputedStyle(node).backgroundColor), green)
-  await page.getByLabel('Appearance').selectOption('dark')
+  await page.getByLabel('Site theme').selectOption('dark')
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
 
-  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await page.getByRole('button', { name: 'Clear canvas' }).click()
   await page.getByText('0 planned commits in 2026').waitFor()
+  assert.equal(await downloadButton.isDisabled(), true)
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
+  await page.getByText('61 planned commits in 2026').waitFor()
   await page.getByRole('button', { name: 'Redo', exact: true }).click()
+  await page.getByText('0 planned commits in 2026').waitFor()
+  await page.getByRole('button', { name: 'Undo', exact: true }).click()
   await page.getByText('61 planned commits in 2026').waitFor()
   await page.getByLabel('Year').selectOption('2025')
   await page.getByText('0 planned commits in 2025').waitFor()
@@ -127,7 +143,7 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByText('0 planned commits in 2026').waitFor()
 
 
-  const appearance = page.getByLabel('Appearance', { exact: true })
+  const appearance = page.getByLabel('Site theme', { exact: true })
   const palette = page.getByLabel('Palette', { exact: true })
   assert.equal(await palette.locator('option').count(), 17)
   await palette.selectOption('mono')
