@@ -165,10 +165,9 @@ export default function App() {
 
   return (
     <main className="app">
-      <section className="workspace" aria-labelledby="calendar-heading">
+      <section className="workspace" aria-label="Contribution canvas">
         <div className="workspace-header">
           <div>
-            <h1 id="calendar-heading">Contribution canvas</h1>
             <p><strong>{total.toLocaleString('en-US')}</strong> {total === 1n ? 'planned commit' : 'planned commits'} in {year}
               {total === 0n && <span className="canvas-hint"> · Select a day to start.</span>}</p>
           </div>

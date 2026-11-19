@@ -189,10 +189,9 @@ button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50
 .site-credit { margin-top: 18px; text-align: center; font-size: 12px; }
 .site-credit a { color: var(--credit); text-decoration: none; }
 .site-credit a:hover, .site-credit a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
-.workspace { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); }
+.workspace { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: clip; box-shadow: var(--shadow); }
 .workspace-header { display: flex; align-items: end; justify-content: space-between; gap: 22px; padding: 28px 28px 24px; border-bottom: 1px solid var(--border); }
-h1 { margin: 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.055em; line-height: 1.2; }
-.workspace-header p { margin: 7px 0 0; color: var(--muted); line-height: 1.5; }
+.workspace-header p { margin: 0; color: var(--muted); line-height: 1.5; }
 .workspace-header p strong { color: var(--accent-text); font-variant-numeric: tabular-nums; }
 .year-control { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .year-control select { color: var(--text); }
@@ -255,7 +254,7 @@ h1 { margin: 0; font-size: clamp(25px, 4vw, 36px); letter-spacing: -.055em; line
 .legend-months { margin-right: 5px; font-weight: 600; }
 .legend-cell { flex: none; width: 12px; height: 12px; border: 1px solid #65776b27; border-radius: 3px; }
 .focus-caption { color: var(--muted); font-size: 11px; }
-.action-bar { gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--border); padding: 15px 28px; background: var(--quiet); border-radius: 0 0 19px 19px; }
+.action-bar { gap: 12px; flex-wrap: wrap; border-top: 1px solid var(--border); padding: 15px 28px; background: var(--quiet); }
 .file-actions, .script-actions, .history-actions { flex-wrap: wrap; }
 .notice { border-top: 1px solid var(--border); padding: 12px 28px; font-size: 13px; color: var(--muted); }
 .notice[role="alert"] { color: var(--error); }
