@@ -1,7 +1,8 @@
 import { memo, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatDate, layout } from '../lib/calendar.ts'
-import { onColor } from '../lib/themes.ts'
+import { cellColor, onColor } from '../lib/themes.ts'
+import type { Theme } from '../lib/themes.ts'
 import { playInterfaceSound } from '../lib/brushSound.ts'
 import { useCellPaint } from '../lib/useCellPaint.ts'
 import type { PaintDelta } from '../lib/useCellPaint.ts'
@@ -13,11 +14,12 @@ interface GraphProps {
   counts: number[]
   levels: number[]
   palette: string[]
+  theme: Theme
   onPaint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, onPaint,
+  dates, counts, levels, palette, theme, onPaint,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
   const [hovered, setHovered] = useState<string>()
@@ -32,7 +34,7 @@ export const Graph = memo(function Graph({
   const activeDate = hovered ?? focused
   const activeIndex = activeDate ? dates.indexOf(activeDate) : -1
   const activeCount = counts[activeIndex] ?? 0
-  const activeColor = palette[levels[activeIndex] ?? 0]
+  const activeColor = cellColor(theme, palette, activeCount, levels[activeIndex] ?? 0)
 
   const cellsByDate = useMemo(() => new Map(dates.map((date, index) => [date, index])), [dates])
 
@@ -65,7 +67,7 @@ export const Graph = memo(function Graph({
             style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
           {cells.map(({ date, column, row }, index) => {
             const count = counts[index] ?? 0
-            const color = palette[levels[index] ?? 0]
+            const color = cellColor(theme, palette, count, levels[index] ?? 0)
             const style = {
               gridColumn: column + 2, gridRow: row + 2, '--cell-color': color, color: onColor(color),
             } as CSSProperties

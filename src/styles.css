@@ -289,7 +289,8 @@ button.palette-preview { padding: 6px; color: var(--text); }
 }
 .palette-picker:popover-open { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; }
 .palette-picker button { min-height: 33px; padding: 4px; }
-.palette-picker .palette-cubes span { width: 10px; height: 10px; border-radius: 2px; }
+.palette-picker .palette-cubes { gap: 2px; }
+.palette-picker .palette-cubes span { width: 9px; height: 9px; border-radius: 2px; }
 .palette-picker button[aria-pressed="true"] { background: var(--active); border-color: var(--focus); }
 @supports (position-area: bottom span-right) {
   .palette-picker { margin: 6px; position-area: bottom span-right; position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline; }
@@ -406,4 +407,8 @@ button.year-marker[aria-pressed="true"] { color: var(--accent-text); background:
 }
 @media (prefers-reduced-motion: reduce) {
   .calendar-toolbar button, .calendar-toolbar select { transition: none; }
+}
+
+@media (max-width: 340px) {
+  .palette-picker:popover-open { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

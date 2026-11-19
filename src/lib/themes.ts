@@ -27,6 +27,7 @@ const classic = {
   winter: 'Winter',
 } as const
 const color = {
+  rainbow: 'Rainbow',
   ocean: 'Ocean',
   lagoon: 'Lagoon',
   plum: 'Plum',
@@ -49,7 +50,7 @@ export const paletteGroups = { Classic: classic, Color: color, Grayscale: graysc
 export type Theme = keyof typeof classic | keyof typeof color | keyof typeof grayscale
 
 type Ramp = [string, string, string, string]
-const ramps: Record<Theme, [light: Ramp, dark: Ramp]> = {
+const ramps: Record<Exclude<Theme, 'rainbow'>, [light: Ramp, dark: Ramp]> = {
   green: [['#aceebb', '#4ac26b', '#2da44e', '#116329'], ['#033a16', '#196c2e', '#2ea043', '#56d364']],
   halloween: [['#ffee4a', '#ffc501', '#fe9600', '#954a00'], ['#631c03', '#bd561d', '#fa7a18', '#fddf68']],
   winter: [['#b6e3ff', '#54aeff', '#0969da', '#0a3069'], ['#0c2d6b', '#1158c7', '#388bfd', '#79c0ff']],
@@ -69,10 +70,20 @@ const ramps: Record<Theme, [light: Ramp, dark: Ramp]> = {
   blackWhite: [['#cccccc', '#888888', '#444444', '#000000'], ['#444444', '#888888', '#cccccc', '#ffffff']],
 }
 
+const rainbow = {
+  light: ['#db3047', '#e36a16', '#d9a900', '#269458', '#187daf', '#4a52bc', '#963fb5'],
+  dark: ['#ff6076', '#ff974f', '#f7d347', '#4bd482', '#4eb8f5', '#8b94ff', '#d489f2'],
+}
+
+export function cellColor(theme: Theme, palette: readonly string[], count: number, level: number) {
+  const index = theme === 'rainbow' ? Math.min(count, palette.length - 1) : level
+  return palette[index]
+}
+
 export function colorsFor(theme: Theme, scheme: Scheme) {
   const dark = scheme === 'dark'
   const empty = theme === 'blackWhite' ? (dark ? '#000000' : '#ffffff') : (dark ? '#151b23' : '#eff2f5')
-  return [empty, ...ramps[theme][dark ? 1 : 0]]
+  return [empty, ...(theme === 'rainbow' ? rainbow[scheme] : ramps[theme][dark ? 1 : 0])]
 }
 
 export function onColor(hex: string) {

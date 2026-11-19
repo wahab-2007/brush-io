@@ -13,6 +13,7 @@ import { newHistory, readActiveYear, readSession, redo, rememberYear, saveSessio
 import type { History } from './lib/session.ts'
 import type { Changes } from './lib/intensity.ts'
 import { colorsFor, schemeFor } from './lib/themes.ts'
+import type { Theme } from './lib/themes.ts'
 import { useAppearancePreferences } from './lib/useAppearancePreferences.ts'
 
 
@@ -41,15 +42,16 @@ function download(filename: string, content: string, type: string) {
 const currentYear = new Date().getUTCFullYear()
 const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
-const YearGraph = memo(function YearGraph({ year, changes, palette, paint }: {
+const YearGraph = memo(function YearGraph({ year, changes, palette, theme, paint }: {
   year: number
   changes: Changes
   palette: string[]
+  theme: Theme
   paint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }) {
   const dates = useMemo(() => yearDates(year), [year])
   const { counts, levels } = useMemo(() => summarize(dates, changes), [dates, changes])
-  return <Graph dates={dates} counts={counts} levels={levels} palette={palette} onPaint={paint}/>
+  return <Graph dates={dates} counts={counts} levels={levels} theme={theme} palette={palette} onPaint={paint}/>
 })
 
 export default function App() {
@@ -137,7 +139,7 @@ export default function App() {
 
       <section className="workspace" aria-label="Contribution canvas">
         <CalendarViewport years={years} activeYear={year} position={position} onActivate={setYear}
-          renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} paint={paintCell}/>}/>
+          renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} theme={theme} paint={paintCell}/>}/>
         {notice && <div className="notice" role="alert">{notice}</div>}
       </section>
 
