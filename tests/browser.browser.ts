@@ -41,6 +41,9 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.goto(origin)
   const downloadButton = page.getByRole('button', { name: 'Download Python' })
   await page.getByText('0 planned commits in 2026').waitFor()
+  assert.equal(await page.getByRole('heading', { name: /Contribution (canvas|calendar)/i }).count(), 0)
+  assert.equal(await page.locator('.workspace').evaluate((panel) => getComputedStyle(panel).overflow), 'clip')
+  assert.equal(await page.locator('.action-bar').evaluate((bar) => getComputedStyle(bar).borderBottomLeftRadius), '0px')
   assert.equal(await downloadButton.isDisabled(), true)
   assert.equal(await page.getByLabel('GitHub username').count(), 0)
   assert.equal(await page.getByText('Brush IO', { exact: true }).count(), 0)
@@ -62,6 +65,14 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
   await page.getByRole('button', { name: 'Expanded', exact: true }).click()
   const selected = page.getByRole('button', { name: '61 planned commits on November 19, 2026' })
   assert.equal(await selected.textContent(), '61')
+  await selected.hover()
+  const readout = page.locator('.cell-readout')
+  assert.match(await readout.innerText(), /November 19, 2026.*61.*commits/s)
+  const fillColor = await selected.evaluate((node) => getComputedStyle(node).backgroundColor)
+  assert.equal(await readout.locator('.readout-number').evaluate((node) => getComputedStyle(node).color), fillColor)
+  await page.mouse.move(1, 1)
+  assert.equal(await readout.textContent(), '')
+
   assert.equal(await countSquares(), true)
   const green = await selected.evaluate((node) => getComputedStyle(node).backgroundColor)
   await page.getByLabel('Palette').selectOption('halloween')
@@ -178,6 +189,17 @@ test('the static Pages build edits, saves, copies, and downloads a blank canvas'
 
 
   const appearance = page.getByLabel('Site theme', { exact: true })
+  for (const [name, scheme, color] of [
+    ['True Light', 'light', 'rgb(246, 248, 250)'],
+    ['True Dark', 'dark', 'rgb(13, 17, 23)'],
+    ['White High Contrast', 'light', 'rgb(255, 255, 255)'],
+    ['Black High Contrast', 'dark', 'rgb(0, 0, 0)'],
+  ]) {
+    await appearance.selectOption({ label: name })
+    assert.equal(await page.locator('html').getAttribute('data-scheme'), scheme)
+    assert.equal(await page.locator('body').evaluate((body) => getComputedStyle(body).backgroundColor), color)
+  }
+
   const palette = page.getByLabel('Palette', { exact: true })
   assert.equal(await palette.locator('option').count(), 17)
   await palette.selectOption('mono')
