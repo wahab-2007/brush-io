@@ -51,16 +51,26 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   const yearRow = (year: number) => viewport.getByRole('region', { name: year + ' calendar', exact: true })
   const toolbar = page.getByRole('group', { name: 'Calendar toolbar' })
   assert.equal(await page.getByLabel('Year', { exact: true }).count(), 0)
-  assert.deepEqual(await toolbar.locator(':scope > button, .toolbar-appearance > button, .toolbar-appearance select').evaluateAll((controls) =>
+  assert.deepEqual(await toolbar.locator(':scope > button, .toolbar-appearance > button, .theme-trigger').evaluateAll((controls) =>
     controls.map((control) => control.getAttribute('aria-label') ?? control.textContent?.trim())),
-  ['Undo', 'Redo', 'Clear canvas', 'Palette', 'Download Script', 'Help', 'Site theme'])
+  ['Clear canvas', 'Undo', 'Redo', 'Palette', 'Download Script', 'Theme', 'Help'])
   assert.equal(await toolbar.evaluate((element) => {
     const { x, width } = element.getBoundingClientRect()
     return Math.abs(x + width / 2 - innerWidth / 2) < 2
   }), true)
-  const themePicker = toolbar.getByLabel('Site theme')
-  assert.ok(await themePicker.evaluate((element) => element.getBoundingClientRect().width > 104))
-  assert.equal(await themePicker.locator('option[value="light"], option[value="dark"]').count(), 0)
+  const themePicker = toolbar.getByRole('button', { name: 'Theme', exact: true })
+  const themeMenu = page.getByRole('dialog', { name: 'Site themes', exact: true })
+  async function chooseTheme(name: string) {
+    if (!await themeMenu.isVisible()) await themePicker.click()
+    await themeMenu.getByRole('button', { name, exact: true }).click()
+  }
+  await themePicker.click()
+  await themeMenu.waitFor()
+  assert.equal(await themeMenu.getByRole('button', { name: 'System', exact: true }).getAttribute('aria-pressed'), 'true')
+  assert.equal(await themeMenu.getByRole('button', { name: 'Light', exact: true }).count(), 0)
+  assert.equal(await themeMenu.getByRole('button', { name: 'Dark', exact: true }).count(), 0)
+  await page.keyboard.press('Escape')
+  await themeMenu.waitFor({ state: 'hidden' })
   assert.equal(await viewport.evaluate((element) =>
     element.parentElement?.classList.contains('workspace') &&
     getComputedStyle(element).borderTopWidth === '0px' &&
@@ -68,20 +78,18 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   const profileLink = page.getByRole('link', { name: '@wahab-2007', exact: true })
   assert.equal(await profileLink.getAttribute('href'), 'https://github.com/wahab-2007')
   assert.equal(await profileLink.evaluate((element) => getComputedStyle(element).color), 'rgb(9, 105, 218)')
-  for (const [label, color] of [
-    ['Undo', 'rgb(117, 36, 59)'],
-    ['Redo', 'rgb(25, 92, 192)'],
-    ['Clear canvas', 'rgb(178, 34, 52)'],
-  ]) {
-    assert.equal(await toolbar.getByRole('button', { name: label, exact: true }).evaluate((element) =>
-      getComputedStyle(element).backgroundColor), color)
-  }
+  const actionColor = (label: string) => toolbar.getByRole('button', { name: label, exact: true }).evaluate((button) =>
+    getComputedStyle(button).backgroundColor)
+  assert.equal(await actionColor('Clear canvas'), 'rgb(178, 34, 52)')
+  assert.equal(await actionColor('Undo'), await actionColor('Help'))
+  assert.equal(await actionColor('Redo'), await actionColor('Help'))
+  assert.equal(await actionColor('Download Script'), await actionColor('Help'))
   assert.equal(await page.getByText('Less', { exact: true }).count(), 0)
   assert.equal(await page.getByText('More', { exact: true }).count(), 0)
-  await cell(firstDay, 2025).waitFor()
+  await cell(firstDay, 2024).waitFor()
   assert.equal(await viewport.evaluate((element) => {
     const bounds = element.getBoundingClientRect()
-    return [...element.querySelectorAll('section')].slice(0, 2).every((row) => {
+    return [...element.querySelectorAll('section')].slice(0, 3).every((row) => {
       const panel = row.getBoundingClientRect()
       return panel.top >= bounds.top && panel.bottom <= bounds.bottom
     })
@@ -94,8 +102,7 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await help.waitFor({ state: 'hidden' })
   assert.equal(await page.locator('.palette-preview').count(), 1)
   const tile = await cell(firstDay).boundingBox()
-  assert.equal(tile?.width, 18)
-  assert.equal(tile?.height, 18)
+  assert.ok(tile && Math.abs(tile.width - 16.2) < 0.05 && tile.height === tile.width)
   for (const label of ['Tools', 'Presets', 'Normal', 'Expanded', 'Odd months', 'Copy Python', 'Import canvas', 'Export canvas']) {
     assert.equal(await page.getByRole('button', { name: label, exact: true }).count(), 0)
   }
@@ -184,13 +191,12 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await toolbar.getByRole('button', { name: 'Undo', exact: true }).click()
   assert.equal(await count(firstDay), 0)
   await choosePalette('Palette', 'Plum')
-  const appearance = page.getByLabel('Site theme', { exact: true })
   await page.evaluate((key) => localStorage.setItem(key, JSON.stringify({ mode: 'dark', theme: 'plum' })),
     'brush-io:appearance:v1')
   await page.reload()
   await cell(lastDay).waitFor()
   assert.equal(await count(lastDay), initial + 1)
-  assert.equal(await appearance.inputValue(), 'true-dark')
+  assert.equal(await themePicker.getAttribute('data-theme'), 'true-dark')
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
   assert.equal(await page.getByRole('button', { name: 'Palette', exact: true }).getAttribute('data-palette'), 'plum')
 
@@ -223,6 +229,7 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await page.getByRole('button', { name: 'Undo', exact: true }).click()
   assert.equal(await count(lastDay), initial + 1)
 
+  await page.setViewportSize({ width: 1211, height: 800 })
   await viewport.evaluate((element) => {
     element.scrollTop = element.firstElementChild!.getBoundingClientRect().height
   })
@@ -240,16 +247,29 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await viewport.evaluate((element) => { element.scrollTop = 0 })
   await page.locator('.year-marker[aria-pressed="true"]').filter({ hasText: '2026' }).waitFor()
 
-  await appearance.selectOption('disco')
-  await page.getByRole('button', { name: 'Disco music' }).waitFor()
+  await chooseTheme('Disco')
   await page.waitForFunction(() => (document.querySelector('audio')?.currentTime ?? 0) > 0)
-  await appearance.selectOption('true-dark')
+  await themePicker.click()
+  await themeMenu.getByRole('button', { name: 'Disco music' }).waitFor()
+  await chooseTheme('True Dark')
   assert.equal(await page.locator('audio').evaluate((audio) => (audio as HTMLAudioElement).paused), true)
+  await page.setViewportSize({ width: 1200, height: 440 })
+  await page.evaluate(() => window.scrollTo(0, 260))
+  await page.waitForFunction(() => scrollY > 0 && Math.abs(
+    (document.querySelector('.toolbar-wrap')?.getBoundingClientRect().top ?? 0) - 12) < 1)
+  await page.evaluate(() => window.scrollTo(0, 0))
   await page.setViewportSize({ width: 375, height: 750 })
   const helpBox = await toolbar.getByRole('button', { name: 'Help', exact: true }).boundingBox()
   const themeBox = await themePicker.boundingBox()
-  assert.ok(helpBox && themeBox && helpBox.x < themeBox.x && Math.abs(helpBox.y - themeBox.y) < 2)
-  assert.equal(await yearRow(2026).locator('.graph-scroll').evaluate((node) => node.scrollWidth > node.clientWidth), true)
+  assert.ok(helpBox && themeBox && themeBox.x < helpBox.x && Math.abs(helpBox.y - themeBox.y) < 2)
+  for (const year of [2026, 2025, 2024]) {
+    assert.equal(await yearRow(year).locator('.graph-scroll').evaluate((node) => {
+      const plot = node.querySelector('.plot')!
+      return getComputedStyle(node).overflowX === 'clip' &&
+        plot.getBoundingClientRect().right <= node.getBoundingClientRect().right &&
+        node.scrollWidth <= node.clientWidth + 1
+    }), true)
+  }
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true)
   assert.ok(requests.every((url) => url.startsWith(origin) || url.startsWith('blob:')))
   assert.deepEqual(failed, [])

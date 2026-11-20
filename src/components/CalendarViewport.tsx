@@ -28,7 +28,7 @@ export function CalendarViewport({ years, position, activeYear, onActivate, rend
     if (!scroller || !row) return
     const height = row.getBoundingClientRect().height
     scroller.scrollTop = startIndex * height
-    updateFirst(Math.floor(scroller.scrollTop / height))
+    updateFirst(Math.floor((scroller.scrollTop + 0.75) / height))
   }, [position, startIndex, years.length])
 
   return <div className="calendar-viewport" ref={viewport} tabIndex={0} role="region" aria-label="Calendar years"
@@ -37,7 +37,7 @@ export function CalendarViewport({ years, position, activeYear, onActivate, rend
       const scroller = event.currentTarget
       const height = scroller.firstElementChild?.getBoundingClientRect().height
       if (!height) return
-      const next = Math.min(years.length - 1, Math.floor(scroller.scrollTop / height))
+      const next = Math.min(years.length - 1, Math.floor((scroller.scrollTop + 0.75) / height))
       if (next === currentFirst.current) return
       updateFirst(next)
       onActivate(years[next])
