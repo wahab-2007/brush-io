@@ -7,6 +7,7 @@ import { playInterfaceSound } from '../lib/brushSound.ts'
 import { useCellPaint } from '../lib/useCellPaint.ts'
 import type { PaintDelta } from '../lib/useCellPaint.ts'
 
+const countFormat = new Intl.NumberFormat('en-US')
 const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 interface GraphProps {
@@ -23,6 +24,7 @@ export const Graph = memo(function Graph({
   dates, counts, levels, palette, theme, onPaint, onInspect,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
+  const dateLabels = useMemo(() => dates.map(formatDate), [dates])
   const hovered = useRef<number | undefined>(undefined)
   const focused = useRef<number | undefined>(undefined)
   const [rangeStart, setRangeStart] = useState(dates[0])
@@ -66,7 +68,7 @@ export const Graph = memo(function Graph({
           const style = {
             gridColumn: column + 2, gridRow: row + 2, '--cell-color': color,
           } as CSSProperties
-          const label = count.toLocaleString('en-US') + (count === 1 ? ' planned commit on ' : ' planned commits on ') + formatDate(date)
+          const label = countFormat.format(count) + (count === 1 ? ' planned commit on ' : ' planned commits on ') + dateLabels[index]
           return <button type="button" key={date} className="cell" style={style}
             ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
             tabIndex={tabDate === date ? 0 : -1} aria-label={label}
