@@ -20,19 +20,19 @@ export function CalendarToolbar(props: CalendarToolbarProps) {
   const helpId = useId()
   return <header className="toolbar-wrap">
     <div className="calendar-toolbar" role="group" aria-label="Calendar toolbar">
-      <button className="history-button" data-action="undo" aria-label="Undo" title={'Undo in ' + props.year}
-        disabled={!props.canUndo} onClick={props.onUndo}><Icon name="undo"/></button>
-      <button className="history-button" data-action="redo" aria-label="Redo" title={'Redo in ' + props.year}
-        disabled={!props.canRedo} onClick={props.onRedo}><Icon name="redo"/></button>
       <button className="history-button" data-action="clear" aria-label="Clear canvas" title={'Clear ' + props.year}
         disabled={!props.canClear} onClick={props.onClear}><Icon name="close"/></button>
+      <button className="history-button" aria-label="Undo" title={'Undo in ' + props.year}
+        disabled={!props.canUndo} onClick={props.onUndo}><Icon name="undo"/></button>
+      <button className="history-button" aria-label="Redo" title={'Redo in ' + props.year}
+        disabled={!props.canRedo} onClick={props.onRedo}><Icon name="redo"/></button>
       {props.palette}
-      <button className="primary" disabled={!props.canDownload} title={'Download script for ' + props.year}
+      <button disabled={!props.canDownload} title={'Download script for ' + props.year}
         onClick={props.onDownload}><Icon name="code"/>Download Script</button>
       <div className="toolbar-appearance">
+        {props.appearance}
         <button type="button" className="history-button help-button" aria-label="Help" aria-haspopup="dialog"
           popoverTarget={helpId}>?</button>
-        {props.appearance}
       </div>
 
       <div id={helpId} className="calendar-help" popover="auto" role="dialog" aria-label="Calendar help">

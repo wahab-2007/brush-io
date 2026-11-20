@@ -337,7 +337,7 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
   .notice { padding: 10px 15px; }
 }
 
-.toolbar-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
+.toolbar-wrap { position: sticky; top: 12px; z-index: 2; display: flex; justify-content: center; margin-bottom: 18px; }
 .calendar-toolbar {
   justify-content: center;
   max-width: 100%;
@@ -351,8 +351,6 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 .calendar-toolbar button.history-button { border-radius: 50%; }
 .toolbar-appearance { display: flex; align-items: center; gap: 8px; max-width: 100%; }
 .help-button { font-size: 16px; }
-button.history-button[data-action="undo"] { --action-color: #75243b; --action-hover: #8e2f49; }
-button.history-button[data-action="redo"] { --action-color: #195cc0; --action-hover: #216bd6; }
 button.history-button[data-action="clear"] { --action-color: #b22234; --action-hover: #cb2d40; }
 .calendar-toolbar button.history-button[data-action] { color: #fff; background: var(--action-color); border-color: var(--action-color); }
 .calendar-toolbar button.history-button[data-action]:hover:not(:disabled) { background: var(--action-hover); border-color: var(--action-hover); }
