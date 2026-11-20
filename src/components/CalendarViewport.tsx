@@ -14,7 +14,7 @@ interface CalendarViewportProps {
 export function CalendarViewport({ years, position, activeYear, onActivate, renderYear }: CalendarViewportProps) {
   const viewport = useRef<HTMLDivElement>(null)
   const startIndex = Math.max(0, years.indexOf(position.year))
-  const [first, setFirst] = useState(() => Math.min(startIndex, Math.max(0, years.length - 2)))
+  const [first, setFirst] = useState(() => Math.min(startIndex, Math.max(0, years.length - 3)))
   const currentFirst = useRef(first)
 
   function updateFirst(next: number) {
@@ -48,7 +48,7 @@ export function CalendarViewport({ years, position, activeYear, onActivate, rend
           onClick={() => onActivate(year)}>{year}</button>
       </h2>
       <div className="year-grid">
-        {index >= first - 1 && index <= first + 2 ? renderYear(year) : null}
+        {index >= first - 1 && index <= first + 3 ? renderYear(year) : null}
       </div>
     </section>)}
   </div>
