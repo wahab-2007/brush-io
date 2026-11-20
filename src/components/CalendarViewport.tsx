@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { YearHeading } from './YearChart.tsx'
 
 export type CalendarPosition = { year: number }
 
@@ -8,7 +9,7 @@ interface CalendarViewportProps {
   position: CalendarPosition
   activeYear: number
   onActivate: (year: number) => void
-  renderYear: (year: number) => ReactNode
+  renderYear: (year: number, active: boolean) => ReactNode
 }
 
 export function CalendarViewport({ years, position, activeYear, onActivate, renderYear }: CalendarViewportProps) {
@@ -43,13 +44,9 @@ export function CalendarViewport({ years, position, activeYear, onActivate, rend
       onActivate(years[next])
     }}>
     {years.map((year, index) => <section className="calendar-year" key={year} aria-label={year + ' calendar'}>
-      <h2 className="year-heading">
-        <button type="button" className="year-marker" aria-pressed={year === activeYear}
-          onClick={() => onActivate(year)}>{year}</button>
-      </h2>
-      <div className="year-grid">
-        {index >= first - 1 && index <= first + 3 ? renderYear(year) : null}
-      </div>
+      {index >= first - 1 && index <= first + 3
+        ? renderYear(year, year === activeYear)
+        : <YearHeading year={year} active={year === activeYear} onActivate={onActivate}/>}
     </section>)}
   </div>
 }

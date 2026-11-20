@@ -1,7 +1,7 @@
 import { memo, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, KeyboardEvent } from 'react'
 import { formatDate, layout } from '../lib/calendar.ts'
-import { cellColor, onColor } from '../lib/themes.ts'
+import { cellColor } from '../lib/themes.ts'
 import type { Theme } from '../lib/themes.ts'
 import { playInterfaceSound } from '../lib/brushSound.ts'
 import { useCellPaint } from '../lib/useCellPaint.ts'
@@ -16,25 +16,21 @@ interface GraphProps {
   palette: string[]
   theme: Theme
   onPaint: (date: string, delta: PaintDelta, stroke: symbol) => void
+  onInspect: (index?: number) => void
 }
 
 export const Graph = memo(function Graph({
-  dates, counts, levels, palette, theme, onPaint,
+  dates, counts, levels, palette, theme, onPaint, onInspect,
 }: GraphProps) {
   const { cells, months, columns } = useMemo(() => layout(dates), [dates])
-  const [hovered, setHovered] = useState<string>()
-  const [focused, setFocused] = useState<string>()
+  const hovered = useRef<number | undefined>(undefined)
+  const focused = useRef<number | undefined>(undefined)
   const [rangeStart, setRangeStart] = useState(dates[0])
   const buttons = useRef(new Map<string, HTMLButtonElement>())
   const tabDate = dates.includes(rangeStart) ? rangeStart : dates[0]
   const plotStyle = {
     '--weeks': columns,
   } as CSSProperties
-
-  const activeDate = hovered ?? focused
-  const activeIndex = activeDate ? dates.indexOf(activeDate) : -1
-  const activeCount = counts[activeIndex] ?? 0
-  const activeColor = cellColor(theme, palette, activeCount, levels[activeIndex] ?? 0)
 
   const cellsByDate = useMemo(() => new Map(dates.map((date, index) => [date, index])), [dates])
 
@@ -58,60 +54,58 @@ export const Graph = memo(function Graph({
   }
 
   return (
-    <>
-      <div className="graph-scroll" aria-label="Contribution calendar by date">
-        <div className="plot" style={plotStyle}>
-          {months.map(({ label, column }) => <span className="month" key={label}
-            style={{ gridColumn: column + 2, gridRow: 1 }}>{label}</span>)}
-          {weekdays.map((label, index) => <span className="weekday" key={label}
-            style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
-          {cells.map(({ date, column, row }, index) => {
-            const count = counts[index] ?? 0
-            const color = cellColor(theme, palette, count, levels[index] ?? 0)
-            const style = {
-              gridColumn: column + 2, gridRow: row + 2, '--cell-color': color, color: onColor(color),
-            } as CSSProperties
-            const label = count.toLocaleString('en-US') + (count === 1 ? ' planned commit on ' : ' planned commits on ') + formatDate(date)
-            return <button type="button" key={date} className="cell" style={style}
-              ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
-              tabIndex={tabDate === date ? 0 : -1} aria-label={label}
-              onPointerDown={(event) => paint.start(date, event)}
-              onPointerEnter={(event) => {
-                if (event.pointerType !== 'touch') setHovered(date)
-                paint.enter(date, event)
-              }}
-              onPointerLeave={() => { setHovered(undefined); paint.leave(date) }}
-              onContextMenu={(event) => event.preventDefault()}
-              onFocus={(event) => {
-                setRangeStart(date)
-                if (event.currentTarget.matches(':focus-visible')) setFocused(date)
-              }}
-              onBlur={() => setFocused(undefined)}
-              onClick={(event) => {
-                const touch = event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === 'touch'
-                if (event.detail === 0 || touch) applyPaint(date, 1, Symbol())
-              }}
-              onKeyDown={(event) => {
-                if (['+', '=', '-'].includes(event.key)) {
-                  event.preventDefault()
-                  applyPaint(date, event.key === '-' ? -1 : 1, Symbol())
-                } else navigate(event, index)
-              }}>
-            </button>
-          })}
-        </div>
+    <div className="graph-scroll" aria-label="Contribution calendar by date">
+      <div className="plot" style={plotStyle}>
+        {months.map(({ label, column }) => <span className="month" key={label}
+          style={{ gridColumn: column + 2, gridRow: 1 }}>{label}</span>)}
+        {weekdays.map((label, index) => <span className="weekday" key={label}
+          style={{ gridColumn: 1, gridRow: index + 2 }}>{label}</span>)}
+        {cells.map(({ date, column, row }, index) => {
+          const count = counts[index] ?? 0
+          const color = cellColor(theme, palette, count, levels[index] ?? 0)
+          const style = {
+            gridColumn: column + 2, gridRow: row + 2, '--cell-color': color,
+          } as CSSProperties
+          const label = count.toLocaleString('en-US') + (count === 1 ? ' planned commit on ' : ' planned commits on ') + formatDate(date)
+          return <button type="button" key={date} className="cell" style={style}
+            ref={(element) => { if (element) buttons.current.set(date, element); else buttons.current.delete(date) }}
+            tabIndex={tabDate === date ? 0 : -1} aria-label={label}
+            onPointerDown={(event) => paint.start(date, event)}
+            onPointerEnter={(event) => {
+              if (event.pointerType !== 'touch') {
+                hovered.current = index
+                onInspect(index)
+              }
+              paint.enter(date, event)
+            }}
+            onPointerLeave={() => {
+              hovered.current = undefined
+              onInspect(focused.current)
+              paint.leave(date)
+            }}
+            onContextMenu={(event) => event.preventDefault()}
+            onFocus={(event) => {
+              setRangeStart(date)
+              focused.current = event.currentTarget.matches(':focus-visible') ? index : undefined
+              onInspect(hovered.current ?? focused.current)
+            }}
+            onBlur={() => {
+              focused.current = undefined
+              onInspect(hovered.current)
+            }}
+            onClick={(event) => {
+              const touch = event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === 'touch'
+              if (event.detail === 0 || touch) applyPaint(date, 1, Symbol())
+            }}
+            onKeyDown={(event) => {
+              if (['+', '=', '-'].includes(event.key)) {
+                event.preventDefault()
+                applyPaint(date, event.key === '-' ? -1 : 1, Symbol())
+              } else navigate(event, index)
+            }}>
+          </button>
+        })}
       </div>
-      <div className="graph-footer">
-        <div className="cell-readout" aria-hidden="true">
-          {activeDate && activeIndex >= 0 && <>
-            <span>{formatDate(activeDate)}</span>
-            <span className="readout-number" style={{ color: activeColor, backgroundColor: onColor(activeColor) }}>
-              {activeCount.toLocaleString('en-US')}
-            </span>
-            <span>{activeCount === 1 ? 'commit' : 'commits'}</span>
-          </>}
-        </div>
-      </div>
-    </>
+    </div>
   )
 })

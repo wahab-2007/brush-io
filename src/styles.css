@@ -323,10 +323,6 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.graph-footer { display: flex; flex-wrap: wrap; align-items: center; min-height: 28px; gap: 5px 10px; }
-.cell-readout { display: flex; align-items: center; gap: 6px; min-height: 23px; color: var(--muted); font-size: 12px; }
-.cell-readout:empty { min-height: 0; }
-.readout-number { border-radius: 4px; padding: 2px 6px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .calendar-toolbar { flex-wrap: wrap; }
 .notice { border-top: 1px solid var(--border); padding: 12px 28px; font-size: 13px; color: var(--muted); }
 .notice[role="alert"] { color: var(--error); }
@@ -396,7 +392,7 @@ button.history-button[data-action="clear"] { --action-color: #b22234; --action-h
 }
 
 .calendar-viewport {
-  --year-height: clamp(133px, 100px + 8vw, 200px);
+  --year-height: clamp(120px, 96px + 7.5vw, 185px);
   max-height: calc(3 * var(--year-height));
   overflow-y: auto;
   overflow-x: hidden;
@@ -407,14 +403,30 @@ button.history-button[data-action="clear"] { --action-color: #b22234; --action-h
 .calendar-viewport:focus-visible { outline-offset: -2px; }
 .calendar-year {
   display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
+  grid-template-columns: clamp(50px, 7vw, 74px) minmax(0, 1fr);
   gap: 8px;
   height: var(--year-height);
   padding: 12px 16px 4px;
   border-bottom: 1px solid var(--border);
 }
 .calendar-year:last-child { border-bottom: 0; }
+.year-rail { min-width: 0; display: grid; justify-items: start; align-content: start; gap: 5px; }
 .year-heading { margin: 4px 0 0; font-size: 14px; }
+.year-count {
+  display: block;
+  min-width: 32px;
+  max-width: 100%;
+  padding: 4px 7px;
+  border: 1px solid var(--control-border);
+  border-radius: 6px;
+  background: var(--quiet);
+  color: var(--text);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
 button.year-marker { padding-inline: 7px; min-height: 30px; border-color: transparent; background: transparent; }
 button.year-marker[aria-pressed="true"] { color: var(--accent-text); background: var(--active); }
 .year-grid { min-width: 0; container-type: inline-size; }

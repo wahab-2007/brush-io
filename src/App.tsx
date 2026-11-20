@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Appearance } from './components/Appearance.tsx'
-import { Graph } from './components/Graph.tsx'
+import { YearChart } from './components/YearChart.tsx'
+import type { YearHeadingProps } from './components/YearChart.tsx'
 import { CalendarToolbar } from './components/CalendarToolbar.tsx'
 import { CalendarViewport } from './components/CalendarViewport.tsx'
 import { PaletteSelect } from './components/PaletteSelect.tsx'
@@ -42,16 +43,16 @@ function download(filename: string, content: string, type: string) {
 const currentYear = new Date().getUTCFullYear()
 const years = Array.from({ length: currentYear - FIRST_YEAR + 1 }, (_, index) => currentYear - index)
 
-const YearGraph = memo(function YearGraph({ year, changes, palette, theme, paint }: {
-  year: number
+const YearGraph = memo(function YearGraph({ year, active, onActivate, changes, palette, theme, paint }: YearHeadingProps & {
   changes: Changes
   palette: string[]
   theme: Theme
   paint: (date: string, delta: PaintDelta, stroke: symbol) => void
 }) {
   const dates = useMemo(() => yearDates(year), [year])
-  const { counts, levels } = useMemo(() => summarize(dates, changes), [dates, changes])
-  return <Graph dates={dates} counts={counts} levels={levels} theme={theme} palette={palette} onPaint={paint}/>
+  const { counts, levels, total } = useMemo(() => summarize(dates, changes), [dates, changes])
+  return <YearChart year={year} active={active} onActivate={onActivate} total={total}
+    dates={dates} counts={counts} levels={levels} theme={theme} palette={palette} onPaint={paint}/>
 })
 
 export default function App() {
@@ -139,7 +140,7 @@ export default function App() {
 
       <section className="workspace" aria-label="Contribution canvas">
         <CalendarViewport years={years} activeYear={year} position={position} onActivate={setYear}
-          renderYear={(item) => <YearGraph year={item} changes={histories[item].current} palette={palette} theme={theme} paint={paintCell}/>}/>
+          renderYear={(item, active) => <YearGraph year={item} active={active} onActivate={setYear} changes={histories[item].current} palette={palette} theme={theme} paint={paintCell}/>}/>
         {notice && <div className="notice" role="alert">{notice}</div>}
       </section>
 
