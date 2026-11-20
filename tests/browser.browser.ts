@@ -49,6 +49,7 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   await cell(firstDay).waitFor()
   const viewport = page.getByRole('region', { name: 'Calendar years', exact: true })
   const yearRow = (year: number) => viewport.getByRole('region', { name: year + ' calendar', exact: true })
+  const yearCount = (year: number) => yearRow(year).locator('.year-count')
   const toolbar = page.getByRole('group', { name: 'Calendar toolbar' })
   assert.equal(await page.getByLabel('Year', { exact: true }).count(), 0)
   assert.deepEqual(await toolbar.locator(':scope > button, .toolbar-appearance > button, .theme-trigger').evaluateAll((controls) =>
@@ -87,6 +88,13 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   assert.equal(await page.getByText('Less', { exact: true }).count(), 0)
   assert.equal(await page.getByText('More', { exact: true }).count(), 0)
   await cell(firstDay, 2024).waitFor()
+  assert.equal(await yearCount(2026).textContent(), '0')
+  assert.equal(await yearCount(2025).textContent(), '0')
+  assert.equal(await yearCount(2024).textContent(), '0')
+  const yearButtonBox = await yearRow(2026).getByRole('button', { name: '2026', exact: true }).boundingBox()
+  const counterBox = await yearCount(2026).boundingBox()
+  assert.ok(yearButtonBox && counterBox && counterBox.y > yearButtonBox.y + yearButtonBox.height)
+
   assert.equal(await viewport.evaluate((element) => {
     const bounds = element.getBoundingClientRect()
     return [...element.querySelectorAll('section')].slice(0, 3).every((row) => {
@@ -200,11 +208,20 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   assert.equal(await page.locator('html').getAttribute('data-scheme'), 'dark')
   assert.equal(await page.getByRole('button', { name: 'Palette', exact: true }).getAttribute('data-palette'), 'plum')
 
+  const annualTotal = '1'
+  assert.equal(await yearCount(2026).textContent(), annualTotal)
+  assert.equal(await yearRow(2026).locator('.cell-readout').count(), 0)
+  const background = (date: string) => cell(date).evaluate((element) => getComputedStyle(element).backgroundColor)
+  const counterColor = () => yearCount(2026).evaluate((element) => getComputedStyle(element).backgroundColor)
   await cell(lastDay).hover()
-  const readout = yearRow(2026).locator('.cell-readout')
-  assert.match(await readout.innerText(), /November 19, 2026/)
-  const cellColor = await cell(lastDay).evaluate((element) => getComputedStyle(element).backgroundColor)
-  assert.equal(await readout.locator('.readout-number').evaluate((element) => getComputedStyle(element).color), cellColor)
+  assert.equal(await yearCount(2026).textContent(), String(initial + 1))
+  assert.equal(await counterColor(), await background(lastDay))
+  await cell(firstDay).hover()
+  assert.equal(await yearCount(2026).textContent(), '0')
+  assert.equal(await counterColor(), await background(firstDay))
+  assert.equal(await yearCount(2025).textContent(), '0')
+  await page.mouse.move(1, 1)
+  assert.equal(await yearCount(2026).textContent(), annualTotal)
   const [script] = await Promise.all([
     page.waitForEvent('download'),
     page.getByRole('button', { name: 'Download Script', exact: true }).click(),
@@ -238,6 +255,9 @@ test('the static Pages build edits, saves, and downloads a blank canvas', { time
   assert.equal(await previousYear.getAttribute('aria-pressed'), 'true')
   await cell(firstDay, 2025).click()
   assert.equal(await count(firstDay, 2025), 1)
+  await page.mouse.move(1, 1)
+  assert.equal(await yearCount(2025).textContent(), '1')
+  assert.equal(await yearCount(2026).textContent(), annualTotal)
   assert.equal(await count(lastDay, 2026), initial + 1)
   const [previousScript] = await Promise.all([
     page.waitForEvent('download'),
