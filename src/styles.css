@@ -264,7 +264,6 @@ button.primary { background: var(--primary); border-color: var(--primary); color
 button.primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
 .app { max-width: 1320px; margin: 0 auto; padding: 32px 32px 36px; }
-.appearance { color: var(--text); }
 button.history-button { flex: none; width: 36px; height: 36px; border-radius: 50%; padding: 0; }
 .site-credit { color: var(--credit); margin-top: 18px; text-align: center; font-size: 12px; }
 .site-credit a { color: var(--credit-link); text-decoration: none; }
@@ -349,6 +348,26 @@ button.cell:hover { outline: 1px solid var(--focus); outline-offset: 1px; }
 }
 .calendar-toolbar button, .calendar-toolbar select { border-radius: 10px; transition: background-color .15s, border-color .15s; }
 .calendar-toolbar button.history-button { border-radius: 50%; }
+.calendar-toolbar button.theme-trigger { border-radius: 18px; padding-inline: 13px; }
+.theme-picker {
+  width: min(330px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  box-sizing: border-box;
+  overflow: auto;
+  padding: 8px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+.theme-picker:popover-open { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; }
+.theme-picker button { padding-inline: 8px; white-space: normal; }
+.theme-picker button[aria-pressed="true"] { background: var(--active); border-color: var(--focus); }
+.theme-picker .music-toggle { grid-column: 1 / -1; }
+@supports (position-area: bottom span-left) {
+  .theme-picker { margin: 8px; position-area: bottom span-left; position-try-fallbacks: flip-block, flip-inline; }
+}
 .toolbar-appearance { display: flex; align-items: center; gap: 8px; max-width: 100%; }
 .help-button { font-size: 16px; }
 button.history-button[data-action="clear"] { --action-color: #b22234; --action-hover: #cb2d40; }

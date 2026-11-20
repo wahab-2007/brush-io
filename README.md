@@ -7,7 +7,7 @@
 1. Open [Brush IO](https://wahab-2007.github.io/brush-io/). Scroll inside the calendar to browse years. Click a year on the left, or paint any cell, to make that year active.
 2. Left-click a cell to add one and right-click to subtract one. Hold either mouse button to repeat faster over time, or drag across cells to paint them in one stroke. Adding and subtracting have distinct sounds. Hovering shows the date and count silently. Use **Undo** to reverse a stroke, **Redo** to replay it, or the red **X** at the far left to clear the active year.
 3. Use the arrow keys to move between cells, **Enter** or **+** to add, and **−** to subtract. On a touchscreen, tap to add.
-4. Click the color cubes to choose a chart palette. **Rainbow** uses seven colors for counts from one through seven or more. Choose **True Light**, **True Dark**, or another site theme in the toolbar that stays at the top as you scroll. **System** follows your device and uses the matching True theme. The circular **?** just to its right opens help. The site theme and chart palette are saved in your browser. **Disco** has a separate music control.
+4. Click the color cubes to choose a chart palette. **Rainbow** uses seven colors for counts from one through seven or more. Open **Theme** in the toolbar to choose **True Light**, **True Dark**, or another site theme. **System** follows your device and uses the matching True theme. The circular **?** just to its right opens help. The site theme and chart palette are saved in your browser. When **Disco** is active, open **Theme** again to play or pause its music.
 5. Select **Download Script** to export the active year, then follow [Run the generated script](#run-the-generated-script). Your canvas is saved in your browser.
 
 ## Run locally
